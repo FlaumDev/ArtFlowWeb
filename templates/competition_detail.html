@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-section">
+    <div class="container">
+        <a class="back-link" href="/competitions">Назад к конкурсам</a>
+
+        <div class="detail-layout">
+            <article class="detail-main">
+                <p class="eyebrow">{{ competition.status }}</p>
+                <h1>{{ competition.title }}</h1>
+                <p class="lead">{{ competition.description }}</p>
+
+                <section class="content-block">
+                    <h2>Основная информация</h2>
+                    <dl class="detail-list">
+                        <div>
+                            <dt>Город</dt>
+                            <dd>{{ competition.city }}</dd>
+                        </div>
+                        <div>
+                            <dt>Место</dt>
+                            <dd>{{ competition.place }}</dd>
+                        </div>
+                        <div>
+                            <dt>Дата</dt>
+                            <dd>{{ competition.date }}</dd>
+                        </div>
+                        <div>
+                            <dt>Срок подачи</dt>
+                            <dd>{{ competition.deadline }}</dd>
+                        </div>
+                        <div>
+                            <dt>Стоимость</dt>
+                            <dd>{{ competition.price }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="content-block">
+                    <h2>Направления</h2>
+                    <ul class="tag-list">
+                        {% for direction in competition.directions %}
+                            <li>{{ direction }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            </article>
+
+            <aside class="detail-aside" aria-label="Подача заявки">
+                <h2>Участие</h2>
+                <p>Переход в Telegram будет вести к выбранному конкурсу через deep link.</p>
+                <a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener">
+                    Подать заявку в Telegram
+                </a>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

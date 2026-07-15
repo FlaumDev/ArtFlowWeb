@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-section">
+    <div class="container">
+        <div class="section-heading">
+            <p class="eyebrow">Актуальные направления</p>
+            <h1>Конкурсы ArtFlow</h1>
+            <p>
+                Первые тестовые карточки для проверки маршрутов, шаблонов и адаптивной верстки.
+            </p>
+        </div>
+
+        {% if competitions %}
+            <div class="competition-grid">
+                {% for competition in competitions %}
+                    <article class="competition-card">
+                        <div class="card-topline">
+                            <span class="status">{{ competition.status }}</span>
+                            <span>{{ competition.city }}</span>
+                        </div>
+                        <h2>{{ competition.title }}</h2>
+                        <p>{{ competition.short_description }}</p>
+                        <dl class="meta-list">
+                            <div>
+                                <dt>Дата</dt>
+                                <dd>{{ competition.date }}</dd>
+                            </div>
+                            <div>
+                                <dt>Стоимость</dt>
+                                <dd>{{ competition.price }}</dd>
+                            </div>
+                        </dl>
+                        <a class="button secondary" href="{{ url_for('competition_detail', competition_id=competition.id) }}">
+                            Подробнее
+                        </a>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h2>Новых конкурсов пока нет</h2>
+                <p>Следите за обновлениями ArtFlow и возвращайтесь позже.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
