@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero not-found" aria-labelledby="not-found-title">
+    <div class="container not-found-inner">
+        <p class="eyebrow">404</p>
+        <h1 id="not-found-title">Страница не найдена</h1>
+        <p class="lead">
+            Такого конкурса или раздела нет. Можно вернуться к списку конкурсов
+            и выбрать доступную карточку.
+        </p>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ url_for('competitions') }}">К конкурсам</a>
+            <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

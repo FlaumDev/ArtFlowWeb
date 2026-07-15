@@ -1,14 +1,173 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero">
+<section class="hero" aria-labelledby="hero-title">
     <div class="container hero-inner">
-        <p class="eyebrow">Творческие конкурсы</p>
-        <h1>ArtFlow</h1>
+        <p class="eyebrow">Творческие конкурсы для сцены и роста</p>
+        <h1 id="hero-title">ArtFlow</h1>
         <p class="lead">
-            Выберите подходящий конкурс, проверьте условия участия и перейдите к подаче заявки в Telegram.
+            Выберите подходящий конкурс, спокойно проверьте условия участия
+            и перейдите к подаче заявки в Telegram.
         </p>
-        <a class="button primary" href="/competitions">Смотреть конкурсы</a>
+        <div class="hero-actions" aria-label="Основные действия">
+            <a class="button primary" href="{{ url_for('competitions') }}">Выбрать конкурс</a>
+            <a class="button ghost" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                Перейти в Telegram
+            </a>
+        </div>
+        <ul class="hero-points" aria-label="Что можно сделать на сайте">
+            <li>Сравнить даты, города и направления</li>
+            <li>Посмотреть условия до заявки</li>
+            <li>Перейти в ArtFlowBot к выбранному конкурсу</li>
+        </ul>
+    </div>
+</section>
+
+<section class="page-band" aria-labelledby="advantages-title">
+    <div class="container">
+        <div class="section-heading compact">
+            <p class="eyebrow">Понятный путь к участию</p>
+            <h2 id="advantages-title">Все важное до перехода в Telegram</h2>
+        </div>
+
+        <div class="feature-grid">
+            <article class="feature-card">
+                <span class="feature-number">01</span>
+                <h3>Простая подача заявки</h3>
+                <p>Сайт помогает выбрать конкурс, а оформление заявки остается в ArtFlowBot.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-number">02</span>
+                <h3>Понятные условия</h3>
+                <p>В карточке видны дата, срок подачи, город, место, цена и статус регистрации.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-number">03</span>
+                <h3>Разные направления</h3>
+                <p>Тестовые данные показывают вокал, хореографию, театр и инструментальное исполнение.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-number">04</span>
+                <h3>Связь с организаторами</h3>
+                <p>Если перед заявкой остаются вопросы, можно перейти в Telegram и уточнить детали.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="page-section" aria-labelledby="nearest-title">
+    <div class="container">
+        <div class="section-row">
+            <div class="section-heading compact">
+                <p class="eyebrow">Ближайшие конкурсы</p>
+                <h2 id="nearest-title">Опубликованные тестовые карточки</h2>
+                <p>
+                    Эти данные временные: позже их заменит чтение публичных конкурсов из PostgreSQL.
+                </p>
+            </div>
+            <a class="button secondary" href="{{ url_for('competitions') }}">Смотреть все конкурсы</a>
+        </div>
+
+        {% if featured_competitions %}
+            <div class="competition-grid">
+                {% for competition in featured_competitions %}
+                    {% include "components/competition_card.html" %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="page-band muted" aria-labelledby="steps-title">
+    <div class="container">
+        <div class="section-heading compact">
+            <p class="eyebrow">Как принять участие</p>
+            <h2 id="steps-title">Четыре спокойных шага</h2>
+        </div>
+
+        <ol class="steps-list">
+            <li>
+                <span>1</span>
+                <div>
+                    <h3>Выберите конкурс</h3>
+                    <p>Откройте список и найдите формат, город и направление, которые подходят участнику.</p>
+                </div>
+            </li>
+            <li>
+                <span>2</span>
+                <div>
+                    <h3>Изучите условия</h3>
+                    <p>Проверьте дату, срок подачи, стоимость, место проведения и статус регистрации.</p>
+                </div>
+            </li>
+            <li>
+                <span>3</span>
+                <div>
+                    <h3>Перейдите в Telegram</h3>
+                    <p>Кнопка на странице конкурса ведет в ArtFlowBot с параметром выбранного конкурса.</p>
+                </div>
+            </li>
+            <li>
+                <span>4</span>
+                <div>
+                    <h3>Отправьте заявку</h3>
+                    <p>Заявка заполняется в боте, где дальше можно проверить данные и отправить их организатору.</p>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="page-section" id="about" aria-labelledby="about-title">
+    <div class="container trust-layout">
+        <div class="section-heading compact">
+            <p class="eyebrow">О проекте</p>
+            <h2 id="about-title">Доверие строится на ясных условиях</h2>
+            <p>
+                ArtFlowWeb не заменяет организатора и Telegram-бота. Его задача -
+                дать участникам, родителям и педагогам понятную публичную страницу
+                перед подачей заявки.
+            </p>
+        </div>
+
+        <div class="trust-grid">
+            <article>
+                <h3>Для участников</h3>
+                <p>Видны направления, формат и основные условия каждого конкурса.</p>
+            </article>
+            <article>
+                <h3>Для родителей</h3>
+                <p>Сроки, город, площадка и стоимость собраны на одной странице.</p>
+            </article>
+            <article>
+                <h3>Для педагогов</h3>
+                <p>Карточки помогают быстро понять, подходит ли конкурс коллективу.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="page-band" id="faq" aria-labelledby="faq-title">
+    <div class="container faq-layout">
+        <div class="section-heading compact">
+            <p class="eyebrow">FAQ</p>
+            <h2 id="faq-title">Короткие ответы перед заявкой</h2>
+        </div>
+
+        <div class="faq-list">
+            <details>
+                <summary>Где подается заявка?</summary>
+                <p>Подача заявки выполняется в Telegram через ArtFlowBot.</p>
+            </details>
+            <details>
+                <summary>Что делать, если регистрация завершена?</summary>
+                <p>Активная кнопка заявки скрывается. Можно выбрать другой конкурс или задать вопрос в Telegram.</p>
+            </details>
+            <details>
+                <summary>Почему данные пока тестовые?</summary>
+                <p>Первый frontend работает без PostgreSQL. Позже эти поля будут приходить из публичной таблицы конкурсов.</p>
+            </details>
+        </div>
     </div>
 </section>
 {% endblock %}

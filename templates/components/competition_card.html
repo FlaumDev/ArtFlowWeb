@@ -1,0 +1,59 @@
+<article class="competition-card">
+    <a
+        class="competition-poster"
+        href="{{ url_for('competition_detail', competition_id=competition.id) }}"
+        aria-label="Открыть конкурс {{ competition.name }}"
+    >
+        {% if competition.poster_url %}
+            <img src="{{ competition.poster_url }}" alt="Афиша {{ competition.name }}">
+        {% else %}
+            <span class="poster-placeholder">
+                <img
+                    src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                    alt=""
+                    aria-hidden="true"
+                >
+                <span>Афиша появится после утверждения материалов</span>
+            </span>
+        {% endif %}
+    </a>
+
+    <div class="competition-card-body">
+        <div class="card-topline">
+            <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
+                {% if competition.registration_is_open %}
+                    Регистрация открыта
+                {% else %}
+                    Регистрация завершена
+                {% endif %}
+            </span>
+            <span>{{ competition.city }}</span>
+        </div>
+
+        <h2>
+            <a href="{{ url_for('competition_detail', competition_id=competition.id) }}">
+                {{ competition.name }}
+            </a>
+        </h2>
+        <p>{{ competition.short_description }}</p>
+
+        <dl class="card-facts">
+            <div>
+                <dt>Дата</dt>
+                <dd>{{ competition.event_date }}</dd>
+            </div>
+            <div>
+                <dt>Направления</dt>
+                <dd>
+                    {% for direction in competition.directions %}
+                        {{ direction }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </dd>
+            </div>
+        </dl>
+
+        <a class="button secondary" href="{{ url_for('competition_detail', competition_id=competition.id) }}">
+            Подробнее
+        </a>
+    </div>
+</article>

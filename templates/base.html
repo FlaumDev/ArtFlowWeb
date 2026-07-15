@@ -4,27 +4,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ title | default("ArtFlow") }}</title>
+    <meta
+        name="description"
+        content="ArtFlow помогает выбрать творческий конкурс, изучить условия и перейти к подаче заявки в Telegram."
+    >
+    <link rel="icon" href="{{ url_for('static', path='/images/artflow-logo.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Перейти к содержанию</a>
+
     <header class="site-header">
         <div class="container header-inner">
-            <a class="brand" href="/">ArtFlow</a>
-            <nav class="site-nav" aria-label="Основная навигация">
-                <a href="/">Главная</a>
-                <a href="/competitions">Конкурсы</a>
+            <a class="brand" href="{{ url_for('index') }}" aria-label="ArtFlow">
+                <img
+                    class="brand-logo"
+                    src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                    alt="ArtFlow"
+                >
+            </a>
+
+            <button
+                class="nav-toggle"
+                type="button"
+                aria-controls="site-menu"
+                aria-expanded="false"
+            >
+                <span class="nav-toggle-line"></span>
+                <span class="nav-toggle-line"></span>
+                <span class="nav-toggle-line"></span>
+                <span class="visually-hidden">Открыть меню</span>
+            </button>
+
+            <nav class="site-nav" id="site-menu" aria-label="Основная навигация">
+                <a href="{{ url_for('index') }}">Главная</a>
+                <a href="{{ url_for('competitions') }}">Конкурсы</a>
+                <a href="{{ url_for('index') }}#about">О проекте</a>
+                <a href="{{ url_for('index') }}#faq">FAQ</a>
             </nav>
         </div>
     </header>
 
-    <main>
+    <main id="main-content">
         {% block content %}{% endblock %}
     </main>
 
     <footer class="site-footer">
-        <div class="container footer-inner">
-            <span>ArtFlow</span>
-            <span>Публичный сайт творческих конкурсов</span>
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <img
+                    class="footer-logo"
+                    src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                    alt="ArtFlow"
+                >
+                <p>
+                    Публичный сайт творческих конкурсов: условия, сроки, направления
+                    и переход к заявке в Telegram.
+                </p>
+            </div>
+
+            <nav class="footer-nav" aria-label="Разделы сайта">
+                <a href="{{ url_for('index') }}">Главная</a>
+                <a href="{{ url_for('competitions') }}">Конкурсы</a>
+                <a href="{{ url_for('index') }}#about">О проекте</a>
+                <a href="{{ url_for('index') }}#faq">FAQ</a>
+            </nav>
+
+            <div class="footer-contact">
+                <a class="button footer-button" href="{{ telegram_url | default('https://t.me/BOT_USERNAME') }}" target="_blank" rel="noopener">
+                    Перейти в Telegram
+                </a>
+                <p>© {{ current_year | default(2026) }} ArtFlow</p>
+            </div>
         </div>
     </footer>
 

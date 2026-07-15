@@ -1,46 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-section">
+<section class="page-hero compact-hero" aria-labelledby="competitions-title">
     <div class="container">
         <div class="section-heading">
-            <p class="eyebrow">Актуальные направления</p>
-            <h1>Конкурсы ArtFlow</h1>
+            <p class="eyebrow">Все конкурсы</p>
+            <h1 id="competitions-title">Конкурсы ArtFlow</h1>
             <p>
-                Первые тестовые карточки для проверки маршрутов, шаблонов и адаптивной верстки.
+                Выберите опубликованный конкурс, сравните условия и откройте
+                подробную страницу перед подачей заявки.
             </p>
         </div>
+    </div>
+</section>
 
+<section class="page-section">
+    <div class="container">
         {% if competitions %}
             <div class="competition-grid">
                 {% for competition in competitions %}
-                    <article class="competition-card">
-                        <div class="card-topline">
-                            <span class="status">{{ competition.status }}</span>
-                            <span>{{ competition.city }}</span>
-                        </div>
-                        <h2>{{ competition.title }}</h2>
-                        <p>{{ competition.short_description }}</p>
-                        <dl class="meta-list">
-                            <div>
-                                <dt>Дата</dt>
-                                <dd>{{ competition.date }}</dd>
-                            </div>
-                            <div>
-                                <dt>Стоимость</dt>
-                                <dd>{{ competition.price }}</dd>
-                            </div>
-                        </dl>
-                        <a class="button secondary" href="{{ url_for('competition_detail', competition_id=competition.id) }}">
-                            Подробнее
-                        </a>
-                    </article>
+                    {% include "components/competition_card.html" %}
                 {% endfor %}
             </div>
         {% else %}
             <div class="empty-state">
                 <h2>Новых конкурсов пока нет</h2>
-                <p>Следите за обновлениями ArtFlow и возвращайтесь позже.</p>
+                <p>
+                    Следите за обновлениями ArtFlow в Telegram или вернитесь на главную страницу.
+                </p>
+                <div class="empty-actions">
+                    <a class="button primary" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                        Перейти в Telegram
+                    </a>
+                    <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
+                </div>
             </div>
         {% endif %}
     </div>

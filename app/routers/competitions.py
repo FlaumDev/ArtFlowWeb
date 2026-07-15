@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -6,60 +8,72 @@ from fastapi.templating import Jinja2Templates
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+TELEGRAM_URL = "https://t.me/BOT_USERNAME"
 
 COMPETITIONS = [
     {
         "id": 1,
-        "title": "ArtFlow Весна",
-        "status": "Прием заявок открыт",
-        "city": "Москва",
-        "date": "15 мая 2026",
-        "deadline": "до 1 мая 2026",
-        "place": "Культурный центр ArtFlow",
-        "directions": ["Вокал", "Хореография"],
-        "price": "от 2500 рублей",
-        "short_description": "Очный конкурс для вокальных и танцевальных номеров.",
+        "name": "ArtFlow Осень",
+        "short_description": "Очный конкурс для вокальных, танцевальных и сценических номеров.",
         "description": (
-            "Тестовая карточка конкурса для первого каркаса сайта. "
-            "В дальнейшем данные будут приходить из публичной таблицы конкурсов."
+            "Тестовый конкурс для первого публичного frontend ArtFlow. "
+            "На этой странице показана структура будущей карточки: сроки, место, "
+            "направления, стоимость и переход к заявке в Telegram."
         ),
+        "event_date": "19 сентября 2026",
+        "application_deadline": "5 сентября 2026",
+        "city": "Москва",
+        "place": "Культурный центр ArtFlow",
+        "directions": ["Вокал", "Хореография", "Театр"],
+        "poster_url": None,
+        "rules_url": None,
+        "price": "от 2 500 рублей",
+        "registration_is_open": True,
         "telegram_url": "https://t.me/BOT_USERNAME?start=competition_1",
     },
     {
         "id": 2,
-        "title": "ArtFlow Лето",
-        "status": "Скоро открытие регистрации",
-        "city": "Санкт-Петербург",
-        "date": "20 июня 2026",
-        "deadline": "будет объявлен позже",
-        "place": "Городская творческая площадка",
-        "directions": ["Инструментальное исполнение", "Театр"],
-        "price": "уточняется",
-        "short_description": "Летний конкурс для сценических и музыкальных направлений.",
+        "name": "ArtFlow Онлайн",
+        "short_description": "Дистанционный формат для участников из разных городов.",
         "description": (
-            "Временное описание для демонстрации страницы конкурса без подключения "
-            "к базе данных и внешним сервисам."
+            "Тестовый онлайн-конкурс в списке MVP. Участник выбирает направление, "
+            "изучает условия и переходит к подаче заявки в ArtFlowBot."
         ),
+        "event_date": "25 августа 2026",
+        "application_deadline": "10 августа 2026",
+        "city": "Онлайн",
+        "place": "Дистанционный формат",
+        "directions": ["Вокал", "Хореография", "Инструментальное исполнение"],
+        "poster_url": None,
+        "rules_url": None,
+        "price": "от 1 500 рублей",
+        "registration_is_open": True,
         "telegram_url": "https://t.me/BOT_USERNAME?start=competition_2",
     },
     {
         "id": 3,
-        "title": "ArtFlow Онлайн",
-        "status": "Прием заявок открыт",
-        "city": "Онлайн",
-        "date": "30 июля 2026",
-        "deadline": "до 15 июля 2026",
-        "place": "Дистанционный формат",
-        "directions": ["Вокал", "Хореография", "Инструментальное исполнение"],
-        "price": "от 1500 рублей",
-        "short_description": "Дистанционный формат для участников из разных городов.",
+        "name": "ArtFlow Лето",
+        "short_description": "Городской конкурс для музыкальных и сценических направлений.",
         "description": (
-            "Тестовый онлайн-конкурс в списке MVP. Реальные условия, сроки и "
-            "стоимость должны быть подтверждены перед публикацией."
+            "Демонстрационная карточка конкурса с закрытой регистрацией. "
+            "Она нужна, чтобы проверить поведение страницы без активной кнопки заявки."
         ),
+        "event_date": "2 августа 2026",
+        "application_deadline": "10 июля 2026",
+        "city": "Санкт-Петербург",
+        "place": "Городская творческая площадка",
+        "directions": ["Инструментальное исполнение", "Театр"],
+        "poster_url": None,
+        "rules_url": None,
+        "price": "уточняется",
+        "registration_is_open": False,
         "telegram_url": "https://t.me/BOT_USERNAME?start=competition_3",
     },
 ]
+
+
+def get_featured_competitions(limit: int = 3):
+    return COMPETITIONS[:limit]
 
 
 @router.get("/competitions", response_class=HTMLResponse)
@@ -70,7 +84,9 @@ async def competitions(request: Request):
         context={
             "request": request,
             "title": "Конкурсы ArtFlow",
+            "current_year": date.today().year,
             "competitions": COMPETITIONS,
+            "telegram_url": TELEGRAM_URL,
         },
     )
 
@@ -94,7 +110,9 @@ async def competition_detail(request: Request, competition_id: int):
         name="competition_detail.html",
         context={
             "request": request,
-            "title": competition["title"],
+            "title": competition["name"],
+            "current_year": date.today().year,
             "competition": competition,
+            "telegram_url": TELEGRAM_URL,
         },
     )

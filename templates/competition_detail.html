@@ -1,15 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-section">
+<section class="page-section detail-section">
     <div class="container">
-        <a class="back-link" href="/competitions">Назад к конкурсам</a>
+        <a class="back-link" href="{{ url_for('competitions') }}">Назад к конкурсам</a>
 
         <div class="detail-layout">
+            <div class="detail-poster" aria-label="Афиша конкурса">
+                {% if competition.poster_url %}
+                    <img src="{{ competition.poster_url }}" alt="Афиша {{ competition.name }}">
+                {% else %}
+                    <div class="poster-placeholder large">
+                        <img
+                            src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                            alt=""
+                            aria-hidden="true"
+                        >
+                        <span>Афиша появится после утверждения материалов</span>
+                    </div>
+                {% endif %}
+            </div>
+
             <article class="detail-main">
-                <p class="eyebrow">{{ competition.status }}</p>
-                <h1>{{ competition.title }}</h1>
-                <p class="lead">{{ competition.description }}</p>
+                <p class="eyebrow">Конкурс ArtFlow</p>
+                <div class="detail-title-row">
+                    <h1>{{ competition.name }}</h1>
+                    <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
+                        {% if competition.registration_is_open %}
+                            Регистрация открыта
+                        {% else %}
+                            Регистрация завершена
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="lead">{{ competition.short_description }}</p>
 
                 <section class="content-block">
                     <h2>Основная информация</h2>
@@ -24,11 +48,11 @@
                         </div>
                         <div>
                             <dt>Дата</dt>
-                            <dd>{{ competition.date }}</dd>
+                            <dd>{{ competition.event_date }}</dd>
                         </div>
                         <div>
                             <dt>Срок подачи</dt>
-                            <dd>{{ competition.deadline }}</dd>
+                            <dd>{{ competition.application_deadline }}</dd>
                         </div>
                         <div>
                             <dt>Стоимость</dt>
@@ -45,14 +69,45 @@
                         {% endfor %}
                     </ul>
                 </section>
+
+                <section class="content-block">
+                    <h2>О конкурсе</h2>
+                    <p>{{ competition.description }}</p>
+                </section>
+
+                {% if competition.rules_url %}
+                    <section class="content-block">
+                        <h2>Положение</h2>
+                        <a class="text-link" href="{{ competition.rules_url }}" target="_blank" rel="noopener">
+                            Открыть положение конкурса
+                        </a>
+                    </section>
+                {% endif %}
             </article>
 
             <aside class="detail-aside" aria-label="Подача заявки">
-                <h2>Участие</h2>
-                <p>Переход в Telegram будет вести к выбранному конкурсу через deep link.</p>
-                <a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener">
-                    Подать заявку в Telegram
-                </a>
+                {% if competition.registration_is_open %}
+                    <h2>Участие</h2>
+                    <p>
+                        Переход откроет ArtFlowBot с параметром выбранного конкурса:
+                        competition_{{ competition.id }}.
+                    </p>
+                    <a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener">
+                        Подать заявку в Telegram
+                    </a>
+                {% else %}
+                    <h2>Регистрация завершена</h2>
+                    <p>
+                        На этот конкурс уже нельзя подать активную заявку. Выберите другой конкурс
+                        или задайте вопрос организаторам.
+                    </p>
+                    <a class="button secondary full-width" href="{{ url_for('competitions') }}">
+                        Посмотреть другие конкурсы
+                    </a>
+                    <a class="button ghost full-width" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                        Задать вопрос в Telegram
+                    </a>
+                {% endif %}
             </aside>
         </div>
     </div>
