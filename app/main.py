@@ -1,19 +1,34 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import date
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.routers.competitions import (
-    TELEGRAM_URL,
-    get_featured_competitions,
-    router as competitions_router,
+from app.config import settings
+from app.database import (
+    DatabaseUnavailableError,
+    check_database_connection,
+    close_database_pool,
+    open_database_pool,
 )
+from app.routers.competitions import router as competitions_router
+from app.services.competitions import get_featured_competitions
 
 
-app = FastAPI(title="ArtFlowWeb")
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    await open_database_pool()
+    try:
+        yield
+    finally:
+        await close_database_pool()
+
+
+app = FastAPI(title="ArtFlowWeb", lifespan=lifespan)
 
 templates = Jinja2Templates(directory="templates")
 
@@ -23,6 +38,16 @@ app.include_router(competitions_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    competitions_unavailable = False
+    status_code = 200
+
+    try:
+        featured_competitions = await get_featured_competitions()
+    except DatabaseUnavailableError:
+        featured_competitions = []
+        competitions_unavailable = True
+        status_code = 503
+
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -30,14 +55,29 @@ async def index(request: Request):
             "request": request,
             "title": "ArtFlow - творческие конкурсы",
             "current_year": date.today().year,
-            "featured_competitions": get_featured_competitions(),
-            "telegram_url": TELEGRAM_URL,
+            "featured_competitions": featured_competitions,
+            "competitions_unavailable": competitions_unavailable,
+            "telegram_url": settings.telegram_url,
         },
+        status_code=status_code,
     )
 
 
 @app.get("/health")
 async def health():
+    return {"status": "ok"}
+
+
+@app.get("/health/db")
+async def health_db():
+    try:
+        await check_database_connection()
+    except DatabaseUnavailableError:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unavailable"},
+        )
+
     return {"status": "ok"}
 
 
@@ -50,7 +90,7 @@ async def not_found(request: Request, exc: StarletteHTTPException):
             "request": request,
             "title": "Страница не найдена",
             "current_year": date.today().year,
-            "telegram_url": TELEGRAM_URL,
+            "telegram_url": settings.telegram_url,
         },
         status_code=404,
     )

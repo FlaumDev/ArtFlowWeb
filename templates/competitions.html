@@ -7,7 +7,7 @@
             <p class="eyebrow">Все конкурсы</p>
             <h1 id="competitions-title">Конкурсы ArtFlow</h1>
             <p>
-                Выберите опубликованный конкурс, сравните условия и откройте
+                Выберите конкурс, сравните условия и откройте
                 подробную страницу перед подачей заявки.
             </p>
         </div>
@@ -16,7 +16,15 @@
 
 <section class="page-section">
     <div class="container">
-        {% if competitions %}
+        {% if load_error %}
+            <div class="empty-state is-error" role="alert">
+                <h2>Не удалось загрузить конкурсы</h2>
+                <p>Данные временно недоступны. Пожалуйста, попробуйте открыть страницу позже.</p>
+                <div class="empty-actions">
+                    <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
+                </div>
+            </div>
+        {% elif competitions %}
             <div class="competition-grid">
                 {% for competition in competitions %}
                     {% include "components/competition_card.html" %}
@@ -29,9 +37,11 @@
                     Следите за обновлениями ArtFlow в Telegram или вернитесь на главную страницу.
                 </p>
                 <div class="empty-actions">
-                    <a class="button primary" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                        Перейти в Telegram
-                    </a>
+                    {% if telegram_url %}
+                        <a class="button primary" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                            Перейти в Telegram
+                        </a>
+                    {% endif %}
                     <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
                 </div>
             </div>

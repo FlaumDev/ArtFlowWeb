@@ -5,7 +5,7 @@
 ```text
 Главная /
 ├── Все конкурсы /competitions
-│   └── Конкурс /competitions/{slug}
+│   └── Конкурс /competitions/{competition_id}
 ├── Об ArtFlow /about
 ├── FAQ /faq
 ├── Контакты /contacts
@@ -85,7 +85,7 @@
 - цена от или краткое описание стоимости;
 - CTA «Подробнее».
 
-## 4. Конкурс `/competitions/{slug}`
+## 4. Конкурс `/competitions/{competition_id}`
 
 ### Цель
 

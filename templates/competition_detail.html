@@ -6,19 +6,24 @@
         <a class="back-link" href="{{ url_for('competitions') }}">Назад к конкурсам</a>
 
         <div class="detail-layout">
-            <div class="detail-poster" aria-label="Афиша конкурса">
+            <div class="detail-poster" aria-label="Афиша конкурса" data-poster>
                 {% if competition.poster_url %}
-                    <img src="{{ competition.poster_url }}" alt="Афиша {{ competition.name }}">
-                {% else %}
-                    <div class="poster-placeholder large">
-                        <img
-                            src="{{ url_for('static', path='/images/artflow-logo.png') }}"
-                            alt=""
-                            aria-hidden="true"
-                        >
-                        <span>Афиша появится после утверждения материалов</span>
-                    </div>
+                    <img
+                        class="poster-image"
+                        src="{{ competition.poster_url }}"
+                        alt="Афиша {{ competition.name }}"
+                        loading="eager"
+                        data-poster-image
+                    >
                 {% endif %}
+                <div class="poster-placeholder large" data-poster-placeholder>
+                    <img
+                        src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                        alt=""
+                        aria-hidden="true"
+                    >
+                    <span>Афиша скоро появится</span>
+                </div>
             </div>
 
             <article class="detail-main">
@@ -63,11 +68,15 @@
 
                 <section class="content-block">
                     <h2>Направления</h2>
-                    <ul class="tag-list">
-                        {% for direction in competition.directions %}
-                            <li>{{ direction }}</li>
-                        {% endfor %}
-                    </ul>
+                    {% if competition.directions %}
+                        <ul class="tag-list">
+                            {% for direction in competition.directions %}
+                                <li>{{ direction }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Направления уточняются.</p>
+                    {% endif %}
                 </section>
 
                 <section class="content-block">
@@ -86,27 +95,29 @@
             </article>
 
             <aside class="detail-aside" aria-label="Подача заявки">
-                {% if competition.registration_is_open %}
+                {% if competition.registration_is_open and competition.telegram_url %}
                     <h2>Участие</h2>
-                    <p>
-                        Переход откроет ArtFlowBot с параметром выбранного конкурса:
-                        competition_{{ competition.id }}.
-                    </p>
+                    <p>Нажмите кнопку, чтобы продолжить подачу заявки именно на этот конкурс.</p>
                     <a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener">
                         Подать заявку в Telegram
                     </a>
+                {% elif competition.registration_is_open %}
+                    <h2>Участие</h2>
+                    <p>Переход к подаче заявки временно недоступен. Пожалуйста, попробуйте позже.</p>
                 {% else %}
                     <h2>Регистрация завершена</h2>
                     <p>
-                        На этот конкурс уже нельзя подать активную заявку. Выберите другой конкурс
+                        Приём заявок на этот конкурс завершён. Выберите другой конкурс
                         или задайте вопрос организаторам.
                     </p>
                     <a class="button secondary full-width" href="{{ url_for('competitions') }}">
                         Посмотреть другие конкурсы
                     </a>
-                    <a class="button ghost full-width" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                        Задать вопрос в Telegram
-                    </a>
+                    {% if telegram_url %}
+                        <a class="button ghost full-width" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                            Задать вопрос в Telegram
+                        </a>
+                    {% endif %}
                 {% endif %}
             </aside>
         </div>
