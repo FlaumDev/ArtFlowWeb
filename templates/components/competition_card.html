@@ -3,19 +3,25 @@
         class="competition-poster"
         href="{{ url_for('competition_detail', competition_id=competition.id) }}"
         aria-label="Открыть конкурс {{ competition.name }}"
+        data-poster
     >
         {% if competition.poster_url %}
-            <img src="{{ competition.poster_url }}" alt="Афиша {{ competition.name }}">
-        {% else %}
-            <span class="poster-placeholder">
-                <img
-                    src="{{ url_for('static', path='/images/artflow-logo.png') }}"
-                    alt=""
-                    aria-hidden="true"
-                >
-                <span>Афиша появится после утверждения материалов</span>
-            </span>
+            <img
+                class="poster-image"
+                src="{{ competition.poster_url }}"
+                alt="Афиша {{ competition.name }}"
+                loading="lazy"
+                data-poster-image
+            >
         {% endif %}
+        <span class="poster-placeholder" data-poster-placeholder>
+            <img
+                src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                alt=""
+                aria-hidden="true"
+            >
+            <span>Афиша скоро появится</span>
+        </span>
     </a>
 
     <div class="competition-card-body">
@@ -40,14 +46,18 @@
         <dl class="card-facts">
             <div>
                 <dt>Дата</dt>
-                <dd>{{ competition.event_date }}</dd>
+                <dd>{{ competition.event_date or "Дата уточняется" }}</dd>
             </div>
             <div>
                 <dt>Направления</dt>
                 <dd>
-                    {% for direction in competition.directions %}
-                        {{ direction }}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
+                    {% if competition.directions %}
+                        {% for direction in competition.directions %}
+                            {{ direction }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Направления уточняются
+                    {% endif %}
                 </dd>
             </div>
         </dl>

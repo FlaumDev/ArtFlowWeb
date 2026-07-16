@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero not-found" aria-labelledby="unavailable-title">
+    <div class="container not-found-inner">
+        <p class="eyebrow">503</p>
+        <h1 id="unavailable-title">Конкурсы временно недоступны</h1>
+        <p class="lead">
+            Не удалось загрузить данные. Пожалуйста, попробуйте открыть страницу позже.
+        </p>
+        <div class="hero-actions">
+            <a class="button primary" href="{{ url_for('competitions') }}">Попробовать снова</a>
+            <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -71,9 +71,11 @@
             </nav>
 
             <div class="footer-contact">
-                <a class="button footer-button" href="{{ telegram_url | default('https://t.me/BOT_USERNAME') }}" target="_blank" rel="noopener">
-                    Перейти в Telegram
-                </a>
+                {% if telegram_url %}
+                    <a class="button footer-button" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                        Перейти в Telegram
+                    </a>
+                {% endif %}
                 <p>© {{ current_year | default(2026) }} ArtFlow</p>
             </div>
         </div>
