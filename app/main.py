@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import date
@@ -16,7 +17,9 @@ from app.database import (
     open_database_pool,
 )
 from app.routers.competitions import router as competitions_router
+from app.routers.faq import router as faq_router
 from app.services.competitions import get_featured_competitions
+from app.services.faq import get_faq_items
 
 
 @asynccontextmanager
@@ -34,19 +37,34 @@ templates = Jinja2Templates(directory="templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(competitions_router)
+app.include_router(faq_router)
+
+
+async def _load_featured_for_homepage():
+    try:
+        return await get_featured_competitions(), False
+    except DatabaseUnavailableError:
+        return [], True
+
+
+async def _load_faq_for_homepage():
+    try:
+        return (await get_faq_items())[:5], False
+    except DatabaseUnavailableError:
+        return [], True
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    competitions_unavailable = False
-    status_code = 200
+    (
+        (featured_competitions, competitions_unavailable),
+        (faq_items, faq_unavailable),
+    ) = await asyncio.gather(
+        _load_featured_for_homepage(),
+        _load_faq_for_homepage(),
+    )
 
-    try:
-        featured_competitions = await get_featured_competitions()
-    except DatabaseUnavailableError:
-        featured_competitions = []
-        competitions_unavailable = True
-        status_code = 503
+    status_code = 503 if competitions_unavailable else 200
 
     return templates.TemplateResponse(
         request=request,
@@ -57,6 +75,8 @@ async def index(request: Request):
             "current_year": date.today().year,
             "featured_competitions": featured_competitions,
             "competitions_unavailable": competitions_unavailable,
+            "faq_items": faq_items,
+            "faq_unavailable": faq_unavailable,
             "telegram_url": settings.telegram_url,
         },
         status_code=status_code,

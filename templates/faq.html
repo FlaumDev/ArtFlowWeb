@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-hero compact-hero" aria-labelledby="faq-page-title">
+    <div class="container">
+        <div class="section-heading">
+            <p class="eyebrow">FAQ</p>
+            <h1 id="faq-page-title">Частые вопросы</h1>
+            <p>
+                Здесь собраны ответы об участии, заявках и организации конкурсов ArtFlow.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="page-section">
+    <div class="container faq-page-layout">
+        {% if load_error %}
+            <div class="empty-state is-error" role="alert">
+                <h2>Ответы временно недоступны</h2>
+                <p>Пожалуйста, попробуйте открыть эту страницу немного позже.</p>
+            </div>
+        {% elif faq_items %}
+            {% include "components/faq_list.html" %}
+        {% else %}
+            <div class="empty-state">
+                <h2>Ответы скоро появятся</h2>
+                <p>Ответы на частые вопросы скоро появятся.</p>
+            </div>
+        {% endif %}
+
+        {% if telegram_url %}
+            <aside class="faq-contact" aria-labelledby="faq-contact-title">
+                <h2 id="faq-contact-title">Не нашли ответ?</h2>
+                <p>Свяжитесь с организаторами ArtFlow в Telegram.</p>
+                <a class="button secondary" href="{{ telegram_url }}" target="_blank" rel="noopener">
+                    Задать вопрос в Telegram
+                </a>
+            </aside>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

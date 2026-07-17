@@ -1,6 +1,6 @@
 <article class="competition-card">
     <a
-        class="competition-poster"
+        class="competition-poster poster-frame"
         href="{{ url_for('competition_detail', competition_id=competition.id) }}"
         aria-label="Открыть конкурс {{ competition.name }}"
         data-poster
@@ -9,8 +9,10 @@
             <img
                 class="poster-image"
                 src="{{ competition.poster_url }}"
-                alt="Афиша {{ competition.name }}"
+                alt="Афиша конкурса {{ competition.name }}"
                 loading="lazy"
+                decoding="async"
+                hidden
                 data-poster-image
             >
         {% endif %}

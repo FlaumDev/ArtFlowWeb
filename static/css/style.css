@@ -49,7 +49,6 @@ body {
     line-height: 1.6;
 }
 
-body,
 button,
 input,
 textarea,
@@ -429,13 +428,16 @@ p {
 }
 
 .competition-poster {
-    position: relative;
     display: block;
+    text-decoration: none;
+}
+
+.poster-frame {
+    position: relative;
     overflow: hidden;
     min-height: 0;
     aspect-ratio: 4 / 5;
     background: var(--color-surface-soft);
-    text-decoration: none;
 }
 
 .poster-image {
@@ -620,23 +622,108 @@ dd {
     align-items: start;
 }
 
+.faq-page-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+    gap: var(--space-5);
+    align-items: start;
+}
+
 .faq-list {
     display: grid;
     gap: var(--space-3);
 }
 
 .faq-list details {
-    padding: var(--space-3) var(--space-4);
+    overflow: hidden;
+    padding: 0;
 }
 
 .faq-list summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
     cursor: pointer;
     color: var(--color-text);
     font-weight: 800;
+    list-style: none;
+    transition: color 160ms ease, background 160ms ease;
 }
 
-.faq-list p {
-    margin-bottom: 0;
+.faq-list summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-list summary::after {
+    content: "+";
+    display: inline-grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-primary-dark);
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.faq-list summary:hover {
+    background: var(--color-surface-soft);
+    color: var(--color-primary-dark);
+}
+
+.faq-list summary:focus-visible {
+    outline-offset: -4px;
+}
+
+.faq-list details[open] summary {
+    color: var(--color-primary-dark);
+}
+
+.faq-list details[open] summary::after {
+    border-color: var(--color-primary);
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.faq-answer p {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.faq-all-link {
+    margin-top: var(--space-3);
+}
+
+.faq-empty {
+    padding: var(--space-4);
+    border-left: 4px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.faq-empty p {
+    margin: 0;
+}
+
+.faq-contact {
+    position: sticky;
+    top: 100px;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+}
+
+.faq-contact h2 {
+    font-size: 1.35rem;
 }
 
 .empty-state {
@@ -677,10 +764,6 @@ dd {
 }
 
 .detail-poster {
-    position: relative;
-    overflow: hidden;
-    min-height: 0;
-    aspect-ratio: 4 / 5;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface-soft);
@@ -817,8 +900,13 @@ dd {
 
     .trust-layout,
     .faq-layout,
+    .faq-page-layout,
     .footer-grid {
         grid-template-columns: 1fr;
+    }
+
+    .faq-contact {
+        position: static;
     }
 }
 
@@ -949,6 +1037,12 @@ dd {
 
     .steps-list li {
         padding: var(--space-3);
+    }
+
+    .faq-list summary,
+    .faq-answer {
+        padding-right: var(--space-3);
+        padding-left: var(--space-3);
     }
 }
 

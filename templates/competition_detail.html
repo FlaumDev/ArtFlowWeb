@@ -6,13 +6,15 @@
         <a class="back-link" href="{{ url_for('competitions') }}">Назад к конкурсам</a>
 
         <div class="detail-layout">
-            <div class="detail-poster" aria-label="Афиша конкурса" data-poster>
+            <div class="detail-poster poster-frame" aria-label="Афиша конкурса" data-poster>
                 {% if competition.poster_url %}
                     <img
                         class="poster-image"
                         src="{{ competition.poster_url }}"
-                        alt="Афиша {{ competition.name }}"
+                        alt="Афиша конкурса {{ competition.name }}"
                         loading="eager"
+                        decoding="async"
+                        hidden
                         data-poster-image
                     >
                 {% endif %}
