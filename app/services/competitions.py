@@ -12,6 +12,7 @@ from app.repositories import competitions as competitions_repository
 Competition = dict[str, Any]
 
 _DIRECTIONS_SEPARATOR = re.compile(r"[,;\r\n]+")
+_DEFAULT_SHORT_DESCRIPTION = "Краткая информация о конкурсе скоро появится."
 _DEFAULT_DESCRIPTION = "Подробная информация о конкурсе скоро появится."
 
 
@@ -101,16 +102,10 @@ def _serialize_competition(row: Competition) -> Competition:
     name = _text(row.get("name")) or "Конкурс ArtFlow"
     raw_short_description = _text(row.get("short_description"))
     raw_description = _text(row.get("description"))
-    short_description = (
-        raw_short_description or raw_description or _DEFAULT_DESCRIPTION
-    )
-    description = raw_description or short_description
+    short_description = raw_short_description or _DEFAULT_SHORT_DESCRIPTION
+    description = raw_description or _DEFAULT_DESCRIPTION
 
-    event_date = (
-        _format_date(row.get("event_date"))
-        or _text(row.get("date"))
-        or "Дата уточняется"
-    )
+    event_date = _format_date(row.get("event_date")) or "Дата уточняется"
     deadline_value = _date_value(row.get("application_deadline"))
     application_deadline = (
         _format_date(deadline_value) if deadline_value else "Срок уточняется"
@@ -123,9 +118,7 @@ def _serialize_competition(row: Competition) -> Competition:
         "description": description,
         "event_date": event_date,
         "application_deadline": application_deadline,
-        "city": _text(row.get("city"))
-        or _text(row.get("place"))
-        or "Город уточняется",
+        "city": _text(row.get("city")) or "Город уточняется",
         "place": _text(row.get("place")) or "Место уточняется",
         "directions": _directions(row.get("directions")),
         "poster_url": _http_url(row.get("poster_url")),

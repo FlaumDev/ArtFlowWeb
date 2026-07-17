@@ -122,12 +122,52 @@ def test_poster_templates_and_browser_fallback_contract():
 
     assert 'loading="lazy"' in card
     assert 'loading="eager"' in detail
+    assert 'decoding="async"' in card
+    assert 'decoding="async"' in detail
+    assert "Афиша конкурса {{ competition.name }}" in card
+    assert "Афиша конкурса {{ competition.name }}" in detail
+    assert "poster-frame" in card and "poster-frame" in detail
     assert "data-poster-image" in card and "data-poster-placeholder" in card
     assert "data-poster-image" in detail and "data-poster-placeholder" in detail
     assert 'addEventListener("load"' in javascript
     assert 'addEventListener("error"' in javascript
     assert "image.hidden = true" in javascript
     assert "placeholder.hidden = false" in javascript
+
+
+def test_missing_poster_url_stays_missing():
+    result = competitions_service._serialize_competition(
+        competition_row(poster_url=None)
+    )
+
+    assert result["poster_url"] is None
+
+
+def test_https_poster_url_is_passed_to_template_data():
+    poster_url = "https://cdn.example.test/posters/artflow"
+
+    result = competitions_service._serialize_competition(
+        competition_row(poster_url=poster_url)
+    )
+
+    assert result["poster_url"] == poster_url
+
+
+def test_html_poster_url_relies_only_on_client_fallback():
+    result = competitions_service._serialize_competition(
+        competition_row(poster_url="https://www.google.com")
+    )
+    javascript = (PROJECT_ROOT / "static/js/main.js").read_text(encoding="utf-8")
+    backend_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (PROJECT_ROOT / "app").rglob("*.py")
+    ).lower()
+
+    assert result["poster_url"] == "https://www.google.com"
+    assert 'addEventListener("error", showPlaceholder' in javascript
+    assert not {"requests", "httpx", "aiohttp"}.intersection(
+        set(re.findall(r"[a-z_]+", backend_source))
+    )
 
 
 def test_nullable_fields_have_safe_fallbacks(monkeypatch):
@@ -158,6 +198,27 @@ def test_nullable_fields_have_safe_fallbacks(monkeypatch):
     assert result["directions"] == []
     assert result["registration_is_open"] is False
     assert result["telegram_url"] is None
+
+
+def test_competition_fields_are_not_moved_between_contract_fields():
+    result = competitions_service._serialize_competition(
+        competition_row(
+            date="Старое значение даты",
+            event_date=None,
+            city=None,
+            place="Краткое описание",
+            short_description=None,
+            description="Полное описание",
+        )
+    )
+
+    assert result["event_date"] == "Дата уточняется"
+    assert result["city"] == "Город уточняется"
+    assert result["place"] == "Краткое описание"
+    assert result["short_description"] == (
+        "Краткая информация о конкурсе скоро появится."
+    )
+    assert result["description"] == "Полное описание"
 
 
 def test_registration_deadline_is_inclusive():

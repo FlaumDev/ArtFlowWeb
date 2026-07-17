@@ -24,8 +24,8 @@
 | `name` | `TEXT` | Название конкурса |
 | `description` | `TEXT` | Полное описание |
 | `document` | `TEXT` | Не используется: это локальный путь ArtFlowBot |
-| `date` | `TEXT` | Fallback, если `event_date` отсутствует |
-| `place` | `TEXT` | Место и fallback для города |
+| `date` | `TEXT` | Legacy-поле, сайтом не запрашивается |
+| `place` | `TEXT` | Место проведения |
 | `price` | `TEXT` | Стоимость участия |
 | `create_at` | `TIMESTAMP` | Сайтом не запрашивается |
 | `event_date` | `DATE` | Дата события и сортировка |
@@ -47,10 +47,23 @@
 - главная страница использует параметризованный `LIMIT`;
 - страница конкурса использует параметризованный `id` и тот же фильтр публикации;
 - отрицательный или нулевой ID не отправляется в PostgreSQL;
-- `date` и `place` используются только как fallback;
+- `city`, `place`, `event_date`, `application_deadline`, `price`, `directions`, `description` и `short_description` не подменяют друг друга;
 - `document` не выбирается и не публикуется.
 
-## 3. Разрешённые SELECT-операции
+## 3. Публичная таблица `faq`
+
+ArtFlowBot управляет вопросами, а ArtFlowWeb только читает их.
+
+| Поле | PostgreSQL-тип | Использование ArtFlowWeb |
+|---|---|---|
+| `id` | `INTEGER` | Порядок и идентификатор записи |
+| `question` | `TEXT` | Текст вопроса |
+| `answer` | `TEXT` | Текст ответа |
+| `create_at` | `TIMESTAMP` | Выбирается repository, но не публикуется в интерфейсе |
+
+Repository выбирает только эти четыре столбца и сортирует записи по `id ASC`. Service удаляет записи с пустым `question`, очищает пробелы по краям и подставляет нейтральный текст для пустого `answer`. Значения выводятся с обычным экранированием Jinja2 без фильтра `safe`.
+
+## 4. Разрешённые SELECT-операции
 
 Проверка подключения:
 
@@ -75,9 +88,17 @@ ORDER BY event_date ASC NULLS LAST, id ASC
 WHERE id = %s AND is_published = TRUE
 ```
 
+FAQ выбирается явным списком столбцов:
+
+```sql
+SELECT id, question, answer, create_at
+FROM faq
+ORDER BY id ASC
+```
+
 В ArtFlowWeb нет `INSERT`, `UPDATE`, `DELETE`, DDL-команд или миграций при старте.
 
-## 4. Приватные таблицы
+## 5. Приватные таблицы
 
 ArtFlowWeb не должен подключаться к следующим таблицам:
 
@@ -90,7 +111,7 @@ ArtFlowWeb не должен подключаться к следующим та
 
 Рекомендуемая PostgreSQL-роль сайта получает `SELECT` только на публичные таблицы, необходимые frontend.
 
-## 5. Deep-link контракт
+## 6. Deep-link контракт
 
 Формат параметра:
 

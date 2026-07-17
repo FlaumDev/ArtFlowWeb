@@ -163,22 +163,23 @@
         <div class="section-heading compact">
             <p class="eyebrow">FAQ</p>
             <h2 id="faq-title">Короткие ответы перед заявкой</h2>
+            <p>Проверьте основные вопросы об участии или откройте полный раздел.</p>
+            <a class="button secondary faq-all-link" href="{{ url_for('faq') }}">
+                Все вопросы и ответы
+            </a>
         </div>
 
-        <div class="faq-list">
-            <details>
-                <summary>Где подается заявка?</summary>
-                <p>Нажмите кнопку на странице конкурса, чтобы продолжить подачу заявки в Telegram.</p>
-            </details>
-            <details>
-                <summary>Что делать, если регистрация завершена?</summary>
-                <p>Активная кнопка заявки скрывается. Можно выбрать другой конкурс или задать вопрос в Telegram.</p>
-            </details>
-            <details>
-                <summary>Где посмотреть условия конкурса?</summary>
-                <p>Дата, место, стоимость, направления и положение собраны на странице конкурса.</p>
-            </details>
+        {% if faq_unavailable %}
+    <div class="faq-empty is-error" role="alert">
+        <p>Ответы временно недоступны. Пожалуйста, попробуйте немного позже.</p>
+    </div>
+    {% elif faq_items %}
+        {% include "components/faq_list.html" %}
+    {% else %}
+        <div class="faq-empty">
+            <p>Ответы на частые вопросы скоро появятся.</p>
         </div>
+    {% endif %}
     </div>
 </section>
 {% endblock %}
