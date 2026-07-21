@@ -1,10 +1,11 @@
 <div class="faq-list">
     {% for faq_item in faq_items %}
         <details>
-            <summary>{{ faq_item.question }}</summary>
-            <div class="faq-answer">
-                <p>{{ faq_item.answer }}</p>
-            </div>
+            <summary>
+                <span>{{ faq_item.question }}</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+            </summary>
+            <div class="faq-answer"><p>{{ faq_item.answer }}</p></div>
         </details>
     {% endfor %}
 </div>

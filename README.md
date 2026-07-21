@@ -53,6 +53,12 @@ py -m uvicorn app.main:app --reload
 
 Сайт будет доступен по адресу `http://127.0.0.1:8000`.
 
+Для production устанавливается проверенный lock-файл:
+
+```powershell
+py -m pip install -r requirements.lock
+```
+
 ## Тесты
 
 Установить зависимости для разработки:
@@ -67,13 +73,35 @@ py -m pip install -r requirements-dev.txt
 py -m pytest
 ```
 
+Проверить код и зависимости:
+
+```powershell
+py -m bandit -r app
+py -m pip_audit -r requirements.lock
+```
+
+Для обновления lock создают чистое виртуальное окружение, устанавливают в него
+только `requirements.txt`, выполняют тесты, а затем фиксируют реально
+проверенное окружение:
+
+```powershell
+py -m pip freeze | Out-File -Encoding utf8 requirements.lock
+```
+
+Lock не обновляется догадками и `pip-audit --fix` не запускается автоматически.
+Если Windows-путь содержит кириллицу и `pip-api` сообщает об ошибке декодирования,
+перед аудитом можно установить `$env:PYTHONUTF8 = "1"`.
+
 ## Переменные окружения
 
 - `DATABASE_URL` - полный DSN PostgreSQL; используется в приоритете.
 - `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` - отдельные параметры подключения, если `DATABASE_URL` не задан.
 - `BOT_USERNAME` - имя Telegram-бота с ведущим `@` или без него.
-- `APP_ENV` - имя окружения для будущей конфигурации.
-- `BASE_URL` - публичный адрес сайта для будущего использования.
+- `APP_ENV` - `development` или `production`.
+- `BASE_URL` - публичный адрес; canonical и HSTS требуют HTTPS production URL.
+- `ALLOWED_HOSTS` - разрешённые Host через запятую. В production указываются реальный домен и Railway-домен.
+- `ENABLE_DOCS` - включает `/docs`, `/redoc` и `/openapi.json`; в production по умолчанию выключено.
+- `ENABLE_SECURITY_HEADERS` - включает CSP и остальные защитные заголовки.
 
 Если параметры PostgreSQL отсутствуют, приложение запускается, но маршруты с конкурсами и `/health/db` возвращают контролируемый статус `503` без раскрытия параметров подключения.
 
@@ -109,11 +137,15 @@ ArtFlowWeb формирует ссылку, а ArtFlowBot обрабатывае
 - [Пользовательские сценарии](docs/user_flows.md)
 - [Требования к контенту](docs/content_requirements.md)
 - [Контракт Telegram deep link](docs/telegram_deep_link_contract.md)
+- [Безопасность и production](docs/security.md)
 
 ## Безопасность
 
 - `.env` исключён из Git;
 - параметры подключения и traceback не показываются посетителю;
 - SQL использует явные списки столбцов и параметры;
-- внешние ссылки на афиши и положения принимаются только с `http://` или `https://`;
+- внешние ссылки на афиши и положения в production принимаются только с `https://`;
 - значения из БД экранируются Jinja2.
+
+В development документация API доступна по `/docs`. В production FastAPI не
+создаёт маршруты документации, если `ENABLE_DOCS` явно не включён.

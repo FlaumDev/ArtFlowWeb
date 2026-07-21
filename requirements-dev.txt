@@ -1,2 +1,5 @@
 -r requirements.txt
 pytest
+bandit
+pip-audit
+Pillow

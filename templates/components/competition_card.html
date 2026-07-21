@@ -1,4 +1,9 @@
-<article class="competition-card">
+<article
+    class="competition-card"
+    data-competition-card
+    data-status="{% if competition.registration_is_open %}open{% else %}closed{% endif %}"
+    data-search="{{ competition.name }} {{ competition.city }} {{ competition.directions | join(' ') }}"
+>
     <a
         class="competition-poster poster-frame"
         href="{{ url_for('competition_detail', competition_id=competition.id) }}"
@@ -10,6 +15,7 @@
                 class="poster-image"
                 src="{{ competition.poster_url }}"
                 alt="Афиша конкурса {{ competition.name }}"
+                referrerpolicy="no-referrer"
                 loading="lazy"
                 decoding="async"
                 hidden
@@ -17,55 +23,34 @@
             >
         {% endif %}
         <span class="poster-placeholder" data-poster-placeholder>
-            <img
-                src="{{ url_for('static', path='/images/artflow-logo.png') }}"
-                alt=""
-                aria-hidden="true"
-            >
+            <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
             <span>Афиша скоро появится</span>
+        </span>
+        <span class="poster-overlays">
+            <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
+                {% if competition.registration_is_open %}Приём заявок открыт{% else %}Регистрация завершена{% endif %}
+            </span>
+            <span class="poster-date">{{ competition.event_date or "Дата уточняется" }}</span>
         </span>
     </a>
 
     <div class="competition-card-body">
-        <div class="card-topline">
-            <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
-                {% if competition.registration_is_open %}
-                    Регистрация открыта
-                {% else %}
-                    Регистрация завершена
-                {% endif %}
-            </span>
-            <span>{{ competition.city }}</span>
+        <p class="card-city">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+            {{ competition.city }}
+        </p>
+        <h2><a href="{{ url_for('competition_detail', competition_id=competition.id) }}">{{ competition.name }}</a></h2>
+        <p class="card-description">{{ competition.short_description }}</p>
+
+        {% if competition.directions %}
+            <ul class="tag-list card-tags" aria-label="Направления">
+                {% for direction in competition.directions[:3] %}<li>{{ direction }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="card-footer">
+            <p><span>Подать до</span><strong>{{ competition.application_deadline }}</strong></p>
+            <a class="card-arrow" href="{{ url_for('competition_detail', competition_id=competition.id) }}" aria-label="Подробнее о конкурсе {{ competition.name }}">→</a>
         </div>
-
-        <h2>
-            <a href="{{ url_for('competition_detail', competition_id=competition.id) }}">
-                {{ competition.name }}
-            </a>
-        </h2>
-        <p>{{ competition.short_description }}</p>
-
-        <dl class="card-facts">
-            <div>
-                <dt>Дата</dt>
-                <dd>{{ competition.event_date or "Дата уточняется" }}</dd>
-            </div>
-            <div>
-                <dt>Направления</dt>
-                <dd>
-                    {% if competition.directions %}
-                        {% for direction in competition.directions %}
-                            {{ direction }}{% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        Направления уточняются
-                    {% endif %}
-                </dd>
-            </div>
-        </dl>
-
-        <a class="button secondary" href="{{ url_for('competition_detail', competition_id=competition.id) }}">
-            Подробнее
-        </a>
     </div>
 </article>

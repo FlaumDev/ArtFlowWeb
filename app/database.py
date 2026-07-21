@@ -14,12 +14,13 @@ from psycopg_pool import (
     TooManyRequests,
 )
 
-from app.config import settings
+from app.config import Settings, settings
 
 
 logger = logging.getLogger(__name__)
 
 CONNECT_TIMEOUT_SECONDS = 5
+STATEMENT_TIMEOUT_MILLISECONDS = 5000
 POOL_ACQUIRE_TIMEOUT_SECONDS = 1.5
 POOL_MIN_SIZE = 1
 POOL_MAX_SIZE = 5
@@ -31,14 +32,14 @@ class DatabaseUnavailableError(RuntimeError):
     """Raised when the public database cannot be queried safely."""
 
 
-async def open_database_pool() -> None:
+async def open_database_pool(app_settings: Settings | None = None) -> None:
     global _pool
 
     if _pool is not None and not _pool.closed:
         return
 
     try:
-        database_dsn = settings.database_dsn
+        database_dsn = (app_settings or settings).database_dsn
     except (psycopg.Error, ValueError):
         logger.warning("PostgreSQL pool configuration is invalid")
         return
@@ -58,6 +59,10 @@ async def open_database_pool() -> None:
         kwargs={
             "autocommit": True,
             "connect_timeout": CONNECT_TIMEOUT_SECONDS,
+            "options": (
+                "-c default_transaction_read_only=on "
+                f"-c statement_timeout={STATEMENT_TIMEOUT_MILLISECONDS}"
+            ),
             "row_factory": dict_row,
         },
     )

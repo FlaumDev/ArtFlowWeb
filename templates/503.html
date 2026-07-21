@@ -1,17 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-hero not-found" aria-labelledby="unavailable-title">
-    <div class="container not-found-inner">
-        <p class="eyebrow">503</p>
-        <h1 id="unavailable-title">Конкурсы временно недоступны</h1>
-        <p class="lead">
-            Не удалось загрузить данные. Пожалуйста, попробуйте открыть страницу позже.
-        </p>
-        <div class="hero-actions">
-            <a class="button primary" href="{{ url_for('competitions') }}">Попробовать снова</a>
-            <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
+<section class="error-page" aria-labelledby="unavailable-title">
+    <div class="container error-layout">
+        <div>
+            <p class="error-code">503</p>
+            <p class="eyebrow">Небольшая пауза</p>
+            <h1 id="unavailable-title">Конкурсы временно недоступны</h1>
+            <p>Не удалось загрузить расписание. Попробуйте открыть страницу немного позже — все опубликованные данные останутся на месте.</p>
+            <div class="hero-actions">
+                <a class="button primary" href="{{ url_for('competitions') }}">Попробовать снова</a>
+                <a class="button button-quiet" href="{{ url_for('index') }}">На главную</a>
+            </div>
         </div>
+        <div class="error-logo" aria-hidden="true"><img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt=""></div>
     </div>
 </section>
 {% endblock %}
