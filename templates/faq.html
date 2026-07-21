@@ -1,41 +1,51 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-hero compact-hero" aria-labelledby="faq-page-title">
-    <div class="container">
-        <div class="section-heading">
-            <p class="eyebrow">FAQ</p>
-            <h1 id="faq-page-title">Частые вопросы</h1>
-            <p>
-                Здесь собраны ответы об участии, заявках и организации конкурсов ArtFlow.
-            </p>
+<section class="faq-hero" aria-labelledby="faq-page-title">
+    <div class="container faq-hero-layout">
+        <div>
+            <p class="eyebrow">Вопросы и ответы</p>
+            <h1 id="faq-page-title">Всё важное перед выходом на сцену</h1>
+            <p>Коротко отвечаем об участии, заявке и организации событий ArtFlow.</p>
         </div>
+        {% if site_content.media.about %}
+            <figure><img src="{{ site_content.media.about }}" {% if site_content.media.about_small %}srcset="{{ site_content.media.about_small }} 960w, {{ site_content.media.about }} 1600w"{% endif %} sizes="(max-width: 760px) 100vw, 460px" alt="" width="{{ site_content.media.about_width }}" height="{{ site_content.media.about_height }}" loading="eager" decoding="async"></figure>
+        {% endif %}
     </div>
 </section>
 
-<section class="page-section">
+<section class="page-section faq-page-section">
     <div class="container faq-page-layout">
-        {% if load_error %}
-            <div class="empty-state is-error" role="alert">
-                <h2>Ответы временно недоступны</h2>
-                <p>Пожалуйста, попробуйте открыть эту страницу немного позже.</p>
-            </div>
-        {% elif faq_items %}
-            {% include "components/faq_list.html" %}
-        {% else %}
-            <div class="empty-state">
-                <h2>Ответы скоро появятся</h2>
-                <p>Ответы на частые вопросы скоро появятся.</p>
-            </div>
-        {% endif %}
+        <div class="faq-page-main">
+            {% if load_error %}
+                <div class="empty-state is-error" role="alert">
+                    <h2>Ответы временно недоступны</h2>
+                    <p>Пожалуйста, попробуйте открыть эту страницу немного позже.</p>
+                </div>
+            {% elif faq_items %}
+                {% include "components/faq_list.html" %}
+            {% else %}
+                <div class="empty-state">
+                    <h2>Ответы скоро появятся</h2>
+                    <p>Мы готовим полезную информацию об участии и организации конкурсов.</p>
+                </div>
+            {% endif %}
+        </div>
 
-        {% if telegram_url %}
+        {% if site_content.has_contacts %}
             <aside class="faq-contact" aria-labelledby="faq-contact-title">
+                <span class="faq-contact-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                </span>
                 <h2 id="faq-contact-title">Не нашли ответ?</h2>
-                <p>Свяжитесь с организаторами ArtFlow в Telegram.</p>
-                <a class="button secondary" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                    Задать вопрос в Telegram
-                </a>
+                <p>Напишите организаторам — поможем разобраться в условиях и выбрать подходящий конкурс.</p>
+                <div class="faq-contact-links">
+                    {% for organizer in site_content.contacts.organizers %}
+                        {% if loop.first and organizer.whatsapp_url %}<a class="button primary" href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">Написать в WhatsApp</a>{% endif %}
+                        {% if loop.first and organizer.telegram_url %}<a class="text-arrow" href="{{ organizer.telegram_url }}" target="_blank" rel="noopener noreferrer">Telegram <span aria-hidden="true">→</span></a>{% endif %}
+                    {% endfor %}
+                    {% if not site_content.contacts.organizers and site_content.contacts.email %}<a class="button primary" href="mailto:{{ site_content.contacts.email }}">Написать организаторам</a>{% endif %}
+                </div>
             </aside>
         {% endif %}
     </div>

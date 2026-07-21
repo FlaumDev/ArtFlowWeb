@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-section detail-section">
+<section class="event-hero" aria-labelledby="event-title">
     <div class="container">
-        <a class="back-link" href="{{ url_for('competitions') }}">Назад к конкурсам</a>
-
-        <div class="detail-layout">
+        <a class="back-link" href="{{ url_for('competitions') }}"><span aria-hidden="true">←</span> Все конкурсы</a>
+        <div class="event-hero-layout">
             <div class="detail-poster poster-frame" aria-label="Афиша конкурса" data-poster>
                 {% if competition.poster_url %}
                     <img
                         class="poster-image"
                         src="{{ competition.poster_url }}"
                         alt="Афиша конкурса {{ competition.name }}"
+                        referrerpolicy="no-referrer"
                         loading="eager"
                         decoding="async"
                         hidden
@@ -19,110 +19,152 @@
                     >
                 {% endif %}
                 <div class="poster-placeholder large" data-poster-placeholder>
-                    <img
-                        src="{{ url_for('static', path='/images/artflow-logo.png') }}"
-                        alt=""
-                        aria-hidden="true"
-                    >
+                    <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
                     <span>Афиша скоро появится</span>
                 </div>
             </div>
 
-            <article class="detail-main">
-                <p class="eyebrow">Конкурс ArtFlow</p>
-                <div class="detail-title-row">
-                    <h1>{{ competition.name }}</h1>
+            <div class="event-hero-copy">
+                <div class="event-topline">
+                    <p class="eyebrow">Конкурс ArtFlow</p>
                     <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
-                        {% if competition.registration_is_open %}
-                            Регистрация открыта
-                        {% else %}
-                            Регистрация завершена
-                        {% endif %}
+                        {% if competition.registration_is_open %}Приём заявок открыт{% else %}Регистрация завершена{% endif %}
                     </span>
                 </div>
-                <p class="lead">{{ competition.short_description }}</p>
+                <h1 id="event-title">{{ competition.name }}</h1>
+                <p class="event-place-line">
+                    <span>
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                        {{ competition.city }}
+                    </span>
+                    <span>
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 3v4m10-4v4M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                        {{ competition.event_date }}
+                    </span>
+                </p>
+                <p class="event-lead">{{ competition.short_description }}</p>
 
-                <section class="content-block">
-                    <h2>Основная информация</h2>
-                    <dl class="detail-list">
-                        <div>
-                            <dt>Город</dt>
-                            <dd>{{ competition.city }}</dd>
-                        </div>
-                        <div>
-                            <dt>Место</dt>
-                            <dd>{{ competition.place }}</dd>
-                        </div>
-                        <div>
-                            <dt>Дата</dt>
-                            <dd>{{ competition.event_date }}</dd>
-                        </div>
-                        <div>
-                            <dt>Срок подачи</dt>
-                            <dd>{{ competition.application_deadline }}</dd>
-                        </div>
-                        <div>
-                            <dt>Стоимость</dt>
-                            <dd>{{ competition.price }}</dd>
-                        </div>
-                    </dl>
-                </section>
-
-                <section class="content-block">
-                    <h2>Направления</h2>
-                    {% if competition.directions %}
-                        <ul class="tag-list">
-                            {% for direction in competition.directions %}
-                                <li>{{ direction }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Направления уточняются.</p>
-                    {% endif %}
-                </section>
-
-                <section class="content-block">
-                    <h2>О конкурсе</h2>
-                    <p>{{ competition.description }}</p>
-                </section>
-
-                {% if competition.rules_url %}
-                    <section class="content-block">
-                        <h2>Положение</h2>
-                        <a class="text-link" href="{{ competition.rules_url }}" target="_blank" rel="noopener">
-                            Открыть положение конкурса
+                <div class="event-actions">
+                    {% if competition.registration_is_open and competition.telegram_url %}
+                        <a class="button primary" href="{{ competition.telegram_url }}" target="_blank" rel="noopener noreferrer">
+                            Подать заявку в Telegram
+                            <span aria-hidden="true">→</span>
                         </a>
-                    </section>
-                {% endif %}
-            </article>
-
-            <aside class="detail-aside" aria-label="Подача заявки">
-                {% if competition.registration_is_open and competition.telegram_url %}
-                    <h2>Участие</h2>
-                    <p>Нажмите кнопку, чтобы продолжить подачу заявки именно на этот конкурс.</p>
-                    <a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener">
-                        Подать заявку в Telegram
-                    </a>
-                {% elif competition.registration_is_open %}
-                    <h2>Участие</h2>
-                    <p>Переход к подаче заявки временно недоступен. Пожалуйста, попробуйте позже.</p>
-                {% else %}
-                    <h2>Регистрация завершена</h2>
-                    <p>
-                        Приём заявок на этот конкурс завершён. Выберите другой конкурс
-                        или задайте вопрос организаторам.
-                    </p>
-                    <a class="button secondary full-width" href="{{ url_for('competitions') }}">
-                        Посмотреть другие конкурсы
-                    </a>
-                    {% if telegram_url %}
-                        <a class="button ghost full-width" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                            Задать вопрос в Telegram
-                        </a>
+                    {% elif not competition.registration_is_open %}
+                        <a class="button button-quiet" href="{{ url_for('competitions') }}">Посмотреть другие конкурсы</a>
                     {% endif %}
+                    {% if site_content.has_contacts %}<a class="text-arrow" href="#event-help">Задать вопрос организаторам <span aria-hidden="true">↓</span></a>{% endif %}
+                </div>
+                {% if competition.registration_is_open and not competition.telegram_url %}
+                    <p class="inline-notice">Переход к заявке временно недоступен. Попробуйте немного позже.</p>
                 {% endif %}
-            </aside>
+            </div>
         </div>
     </div>
 </section>
+
+<section class="event-content">
+    <div class="container event-content-layout">
+        <div class="event-main">
+            <section class="event-facts" aria-labelledby="facts-title">
+                <div class="section-heading narrow">
+                    <p class="eyebrow">Главное о событии</p>
+                    <h2 id="facts-title">Всё, что нужно запланировать</h2>
+                </div>
+                <dl class="facts-grid">
+                    <div><dt>Дата</dt><dd>{{ competition.event_date }}</dd></div>
+                    <div><dt>Подать заявку до</dt><dd>{{ competition.application_deadline }}</dd></div>
+                    <div><dt>Город</dt><dd>{{ competition.city }}</dd></div>
+                    <div><dt>Площадка</dt><dd>{{ competition.place }}</dd></div>
+                    <div><dt>Стоимость</dt><dd>{{ competition.price }}</dd></div>
+                </dl>
+            </section>
+
+            <section class="event-section" aria-labelledby="about-event-title">
+                <p class="eyebrow">О конкурсе</p>
+                <h2 id="about-event-title">Событие для творческого роста</h2>
+                <p class="event-description">{{ competition.description }}</p>
+            </section>
+
+            <section class="event-section directions-section" aria-labelledby="directions-title">
+                <p class="eyebrow">Направления</p>
+                <h2 id="directions-title">С чем можно выйти на сцену</h2>
+                {% if competition.directions %}
+                    <ul class="tag-list detail-tags">
+                        {% for direction in competition.directions %}<li>{{ direction }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Направления уточняются организаторами.</p>
+                {% endif %}
+            </section>
+
+            {% if competition.rules_url %}
+                <section class="rules-section" aria-labelledby="rules-title">
+                    <div>
+                        <p class="eyebrow">Положение</p>
+                        <h2 id="rules-title">Подробные правила участия</h2>
+                        <p>Откройте документ, чтобы заранее познакомиться со всеми требованиями конкурса.</p>
+                    </div>
+                    <a class="button button-quiet" href="{{ competition.rules_url }}" target="_blank" rel="noopener noreferrer">Открыть положение <span aria-hidden="true">↗</span></a>
+                </section>
+            {% endif %}
+
+            <section class="apply-section" aria-labelledby="apply-title">
+                <div class="section-heading narrow">
+                    <p class="eyebrow">Как подать заявку</p>
+                    <h2 id="apply-title">Несколько понятных шагов</h2>
+                </div>
+                <ol class="apply-steps">
+                    <li><span>1</span><p>Проверьте дату, направление и срок подачи.</p></li>
+                    <li><span>2</span><p>Перейдите в Telegram-бот по кнопке этого конкурса.</p></li>
+                    <li><span>3</span><p>Заполните данные участника и отправьте заявку.</p></li>
+                </ol>
+            </section>
+
+            {% if site_content.contacts.organizers %}
+                <section class="event-help" id="event-help" aria-labelledby="help-title">
+                    <div class="event-help-intro">
+                        <p class="eyebrow">Нужна помощь?</p>
+                        <h2 id="help-title">Спросите организаторов</h2>
+                        <p>Личные контакты предназначены для вопросов. Заявка подаётся только через кнопку конкурса.</p>
+                    </div>
+                    <div class="event-help-people">
+                        {% for organizer in site_content.contacts.organizers %}
+                            {% if organizer.whatsapp_url or organizer.telegram_url %}
+                                <article>
+                                    {% if organizer.photo %}<img src="{{ organizer.photo }}" {% if organizer.photo_small %}srcset="{{ organizer.photo_small }} 480w, {{ organizer.photo }} 800w"{% endif %} sizes="80px" alt="" width="{{ organizer.photo_width }}" height="{{ organizer.photo_height }}" loading="lazy" decoding="async">{% endif %}
+                                    <div><h3>{{ organizer.name }}</h3><p>{{ organizer.role }}</p></div>
+                                    <div class="help-links">
+                                        {% if organizer.whatsapp_url %}<a href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>{% endif %}
+                                        {% if organizer.telegram_url %}<a href="{{ organizer.telegram_url }}" target="_blank" rel="noopener noreferrer">Telegram</a>{% endif %}
+                                    </div>
+                                </article>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+        </div>
+
+        <aside class="event-summary" aria-label="Краткая информация о заявке">
+            <p class="event-summary-date">{{ competition.event_date }}</p>
+            <h2>{% if competition.registration_is_open %}Готовы участвовать?{% else %}Приём заявок завершён{% endif %}</h2>
+            {% if competition.registration_is_open %}
+                <p>Заявка откроется в Telegram-боте сразу для этого конкурса.</p>
+                {% if competition.telegram_url %}<a class="button primary full-width" href="{{ competition.telegram_url }}" target="_blank" rel="noopener noreferrer">Подать заявку</a>{% endif %}
+            {% else %}
+                <p>Выберите другое доступное событие или уточните у организаторов будущие даты.</p>
+                <a class="button button-quiet full-width" href="{{ url_for('competitions') }}">Другие конкурсы</a>
+            {% endif %}
+            <span class="summary-deadline">Срок подачи · {{ competition.application_deadline }}</span>
+        </aside>
+    </div>
+</section>
+
+{% if competition.registration_is_open and competition.telegram_url %}
+    <div class="detail-sticky-cta" data-sticky-cta>
+        <span>{{ competition.event_date }} · {{ competition.city }}</span>
+        <a class="button primary" href="{{ competition.telegram_url }}" target="_blank" rel="noopener noreferrer">Подать заявку</a>
+    </div>
+{% endif %}
 {% endblock %}

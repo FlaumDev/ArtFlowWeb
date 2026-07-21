@@ -3,20 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title | default("ArtFlow") }}</title>
-    <meta
-        name="description"
-        content="ArtFlow помогает выбрать творческий конкурс, изучить условия и перейти к подаче заявки в Telegram."
-    >
+    <title>{% block page_title %}{{ title | default("ArtFlow") }}{% endblock %}</title>
+    <meta name="description" content="{{ meta_description | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ og_title | default(title) | default('ArtFlow') }}">
+    <meta property="og:description" content="{{ og_description | default(meta_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
     <link rel="icon" href="{{ url_for('static', path='/images/artflow-logo.png') }}" type="image/png">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}?v=6">
 </head>
 <body>
     <a class="skip-link" href="#main-content">Перейти к содержанию</a>
 
-    <header class="site-header">
+    <header class="site-header" data-site-header>
         <div class="container header-inner">
-            <a class="brand" href="{{ url_for('index') }}" aria-label="ArtFlow">
+            <a class="brand" href="{{ url_for('index') }}" aria-label="ArtFlow — главная страница">
                 <img
                     class="brand-logo"
                     src="{{ url_for('static', path='/images/artflow-logo.png') }}"
@@ -25,23 +27,89 @@
             </a>
 
             <button
-                class="nav-toggle"
+                class="nav-toggle icon-button"
                 type="button"
                 aria-controls="site-menu"
                 aria-expanded="false"
+                aria-label="Открыть меню"
+                data-menu-toggle
             >
-                <span class="nav-toggle-line"></span>
-                <span class="nav-toggle-line"></span>
-                <span class="nav-toggle-line"></span>
-                <span class="visually-hidden">Открыть меню</span>
+                <span></span><span></span><span></span>
             </button>
 
-            <nav class="site-nav" id="site-menu" aria-label="Основная навигация">
-                <a href="{{ url_for('index') }}">Главная</a>
-                <a href="{{ url_for('competitions') }}">Конкурсы</a>
-                <a href="{{ url_for('index') }}#about">О проекте</a>
-                <a href="{{ url_for('faq') }}">FAQ</a>
-            </nav>
+            <div class="site-menu" id="site-menu" data-site-menu>
+                <nav class="site-nav" aria-label="Основная навигация">
+                    <a href="{{ url_for('index') }}"{% if active_page == "home" %} aria-current="page"{% endif %}>Главная</a>
+                    <a href="{{ url_for('competitions') }}"{% if active_page == "competitions" %} aria-current="page"{% endif %}>Конкурсы</a>
+                    <a href="{{ url_for('index') }}#about">О проекте</a>
+                    <a href="{{ url_for('index') }}#gallery">Фотографии</a>
+                    <a href="{{ url_for('faq') }}"{% if active_page == "faq" %} aria-current="page"{% endif %}>FAQ</a>
+                </nav>
+
+                <div class="header-actions">
+                    {% if site_content.has_contacts %}
+                        <div class="contact-popover" data-contact-popover>
+                            <button
+                                class="button button-quiet header-contact-button"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="header-contact-panel"
+                                data-contact-trigger
+                            >
+                                Связаться
+                            </button>
+                            <div class="contact-menu" id="header-contact-panel" hidden data-contact-panel>
+                                <p class="contact-menu-title">К кому обратиться</p>
+                                {% for organizer in site_content.contacts.organizers %}
+                                    {% if organizer.whatsapp_url or organizer.telegram_url %}
+                                        <div class="contact-menu-person">
+                                            <strong>{{ organizer.name }}</strong>
+                                            <span>{{ organizer.role }}</span>
+                                            <div>
+                                                {% if organizer.whatsapp_url %}
+                                                    <a href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                                                {% endif %}
+                                                {% if organizer.telegram_url %}
+                                                    <a href="{{ organizer.telegram_url }}" target="_blank" rel="noopener noreferrer">Telegram</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                <div class="contact-menu-secondary">
+                                    {% if site_content.contacts.instagram.url %}
+                                        <a href="{{ site_content.contacts.instagram.url }}" target="_blank" rel="noopener noreferrer">Instagram</a>
+                                    {% endif %}
+                                    {% if site_content.contacts.email %}
+                                        <a href="mailto:{{ site_content.contacts.email }}">{{ site_content.contacts.email }}</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <a class="button primary header-cta" href="{{ url_for('competitions') }}">
+                        Выбрать конкурс
+                        <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+
+                {% if site_content.has_contacts %}
+                    <div class="mobile-menu-contacts">
+                        <p>Связаться с организаторами</p>
+                        {% for organizer in site_content.contacts.organizers %}
+                            {% if organizer.whatsapp_url or organizer.telegram_url %}
+                                <div>
+                                    <strong>{{ organizer.name }}</strong>
+                                    {% if organizer.whatsapp_url %}<a href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>{% endif %}
+                                    {% if organizer.telegram_url %}<a href="{{ organizer.telegram_url }}" target="_blank" rel="noopener noreferrer">Telegram</a>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% if site_content.contacts.instagram.url %}<a href="{{ site_content.contacts.instagram.url }}" target="_blank" rel="noopener noreferrer">Instagram</a>{% endif %}
+                        {% if site_content.contacts.email %}<a href="mailto:{{ site_content.contacts.email }}">Email</a>{% endif %}
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </header>
 
@@ -49,38 +117,77 @@
         {% block content %}{% endblock %}
     </main>
 
+    {% if show_contact_section and site_content.has_contacts %}
+        {% include "components/contact_section.html" %}
+    {% endif %}
+
     <footer class="site-footer">
         <div class="container footer-grid">
             <div class="footer-brand">
-                <img
-                    class="footer-logo"
-                    src="{{ url_for('static', path='/images/artflow-logo.png') }}"
-                    alt="ArtFlow"
-                >
-                <p>
-                    Публичный сайт творческих конкурсов: условия, сроки, направления
-                    и переход к заявке в Telegram.
-                </p>
+                <a href="{{ url_for('index') }}" aria-label="ArtFlow — главная страница">
+                    <img
+                        class="footer-logo"
+                        src="{{ url_for('static', path='/images/artflow-logo.png') }}"
+                        alt="ArtFlow"
+                    >
+                </a>
+                <p>{{ site_content.brand.footer_text }}</p>
             </div>
 
             <nav class="footer-nav" aria-label="Разделы сайта">
-                <a href="{{ url_for('index') }}">Главная</a>
+                <p class="footer-title">Разделы</p>
                 <a href="{{ url_for('competitions') }}">Конкурсы</a>
                 <a href="{{ url_for('index') }}#about">О проекте</a>
+                <a href="{{ url_for('index') }}#gallery">Фотографии</a>
                 <a href="{{ url_for('faq') }}">FAQ</a>
             </nav>
 
-            <div class="footer-contact">
-                {% if telegram_url %}
-                    <a class="button footer-button" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                        Перейти в Telegram
-                    </a>
-                {% endif %}
+            <div class="footer-meta">
+                <a class="button footer-cta" href="{{ url_for('competitions') }}">Выбрать конкурс</a>
                 <p>© {{ current_year | default(2026) }} ArtFlow</p>
             </div>
         </div>
     </footer>
 
-    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    {% if show_floating_contact and site_content.sections.floating_contact_enabled and site_content.has_contacts %}
+        <div class="floating-contact" data-floating-contact>
+            <button
+                class="floating-contact-trigger"
+                type="button"
+                aria-expanded="false"
+                aria-controls="floating-contact-panel"
+                data-floating-trigger
+            >
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                Связаться
+            </button>
+            <div class="floating-contact-panel" id="floating-contact-panel" hidden data-floating-panel>
+                <div class="floating-panel-heading">
+                    <div>
+                        <strong>Мы на связи</strong>
+                        <span>Ответим на вопросы об участии</span>
+                    </div>
+                    <button class="icon-button panel-close" type="button" aria-label="Закрыть контакты" data-floating-close>×</button>
+                </div>
+                {% for organizer in site_content.contacts.organizers %}
+                    {% if organizer.whatsapp_url or organizer.telegram_url %}
+                        <div class="floating-person">
+                            <span><strong>{{ organizer.name }}</strong> · {{ organizer.role }}</span>
+                            <div>
+                                {% if organizer.whatsapp_url %}<a href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>{% endif %}
+                                {% if organizer.telegram_url %}<a href="{{ organizer.telegram_url }}" target="_blank" rel="noopener noreferrer">Telegram</a>{% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <div class="floating-secondary">
+                    {% if site_content.contacts.instagram.url %}<a href="{{ site_content.contacts.instagram.url }}" target="_blank" rel="noopener noreferrer">Instagram</a>{% endif %}
+                    {% if site_content.contacts.email %}<a href="mailto:{{ site_content.contacts.email }}">Email</a>{% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <script src="{{ url_for('static', path='/js/main.js') }}?v=6" defer></script>
 </body>
 </html>

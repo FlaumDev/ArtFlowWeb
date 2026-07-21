@@ -1,49 +1,84 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="page-hero compact-hero" aria-labelledby="competitions-title">
-    <div class="container">
-        <div class="section-heading">
-            <p class="eyebrow">Все конкурсы</p>
-            <h1 id="competitions-title">Конкурсы ArtFlow</h1>
-            <p>
-                Выберите конкурс, сравните условия и откройте
-                подробную страницу перед подачей заявки.
-            </p>
+<section class="competitions-hero" aria-labelledby="competitions-title">
+    <div class="container competitions-hero-layout">
+        <div class="competitions-hero-copy">
+            <p class="eyebrow">События ArtFlow</p>
+            <h1 id="competitions-title">Конкурсы, к которым хочется готовиться</h1>
+            <p>Выберите событие по городу, дате и творческому направлению. Все условия открыты до перехода к заявке.</p>
+            <div class="competitions-hero-meta">
+                {% if not load_error %}<span><strong>{{ competitions | length }}</strong> {{ "конкурс" if competitions | length == 1 else "события" }}</span>{% endif %}
+                {% if site_content.has_contacts %}<a href="#contact">Нужна помощь с выбором? <span aria-hidden="true">→</span></a>{% endif %}
+            </div>
+        </div>
+        <div class="competitions-collage" aria-hidden="true">
+            {% if site_content.media.hero_main %}
+                <img src="{{ site_content.media.hero_main }}" {% if site_content.media.hero_main_small %}srcset="{{ site_content.media.hero_main_small }} 960w, {{ site_content.media.hero_main }} 1600w"{% endif %} sizes="(max-width: 760px) 65vw, 420px" alt="" width="{{ site_content.media.hero_main_width }}" height="{{ site_content.media.hero_main_height }}" loading="eager" decoding="async">
+            {% endif %}
+            {% if site_content.media.hero_secondary %}
+                <img src="{{ site_content.media.hero_secondary }}" {% if site_content.media.hero_secondary_small %}srcset="{{ site_content.media.hero_secondary_small }} 720w, {{ site_content.media.hero_secondary }} 1200w"{% endif %} sizes="(max-width: 760px) 42vw, 300px" alt="" width="{{ site_content.media.hero_secondary_width }}" height="{{ site_content.media.hero_secondary_height }}" loading="lazy" decoding="async">
+            {% endif %}
         </div>
     </div>
 </section>
 
-<section class="page-section">
+<section class="page-section competitions-catalog" aria-labelledby="catalog-title">
     <div class="container">
+        <div class="catalog-heading">
+            <div>
+                <p class="eyebrow">Расписание</p>
+                <h2 id="catalog-title">Найдите подходящее событие</h2>
+            </div>
+            {% if competitions and not load_error %}
+                <p class="filter-result" aria-live="polite"><span data-filter-count>{{ competitions | length }}</span> найдено</p>
+            {% endif %}
+        </div>
+
+        {% if competitions and not load_error %}
+            <form class="competition-filters" data-competition-filters>
+                <label class="search-field">
+                    <span>Поиск</span>
+                    <span class="search-input-wrap">
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        <input type="search" name="query" placeholder="Название, город или направление" autocomplete="off" data-filter-search>
+                    </span>
+                </label>
+                <fieldset class="status-filter">
+                    <legend>Статус регистрации</legend>
+                    <div class="segmented-control" data-filter-status>
+                        <button type="button" class="is-active" data-status-value="all" aria-pressed="true">Все</button>
+                        <button type="button" data-status-value="open" aria-pressed="false">Приём открыт</button>
+                        <button type="button" data-status-value="closed" aria-pressed="false">Завершённые</button>
+                    </div>
+                </fieldset>
+                <button class="filter-reset" type="reset" data-filter-reset>Сбросить</button>
+            </form>
+        {% endif %}
+
         {% if load_error %}
             <div class="empty-state is-error" role="alert">
                 <h2>Не удалось загрузить конкурсы</h2>
                 <p>Данные временно недоступны. Пожалуйста, попробуйте открыть страницу позже.</p>
-                <div class="empty-actions">
-                    <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
-                </div>
+                <a class="button button-quiet" href="{{ url_for('index') }}">На главную</a>
             </div>
         {% elif competitions %}
-            <div class="competition-grid">
+            <div class="competition-grid" data-competition-list>
                 {% for competition in competitions %}
                     {% include "components/competition_card.html" %}
                 {% endfor %}
             </div>
+            <div class="empty-state filter-empty" hidden data-filter-empty>
+                <h2>Ничего не нашли</h2>
+                <p>Попробуйте изменить запрос или показать конкурсы с другим статусом.</p>
+            </div>
         {% else %}
             <div class="empty-state">
-                <h2>Новых конкурсов пока нет</h2>
-                <p>
-                    Следите за обновлениями ArtFlow в Telegram или вернитесь на главную страницу.
-                </p>
-                <div class="empty-actions">
-                    {% if telegram_url %}
-                        <a class="button primary" href="{{ telegram_url }}" target="_blank" rel="noopener">
-                            Перейти в Telegram
-                        </a>
-                    {% endif %}
-                    <a class="button secondary" href="{{ url_for('index') }}">На главную</a>
-                </div>
+                <h2>Новые события готовятся</h2>
+                <p>Следите за новостями ArtFlow — расписание появится здесь после публикации.</p>
+                {% if site_content.contacts.instagram.url %}
+                    <a class="button button-quiet" href="{{ site_content.contacts.instagram.url }}" target="_blank" rel="noopener noreferrer">Открыть Instagram</a>
+                {% endif %}
             </div>
         {% endif %}
     </div>

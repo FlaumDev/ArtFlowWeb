@@ -1,0 +1,117 @@
+{
+  "brand": {
+    "name": "ArtFlow",
+    "hero_eyebrow": "Творческие конкурсы для детей и подростков",
+    "hero_title": "Сцена, на которой раскрываются таланты",
+    "hero_text": "Творческие конкурсы с понятными условиями, живой поддержкой организаторов и удобной подачей заявки.",
+    "about_title": "Создаём события, которые хочется запомнить",
+    "about_text": "Мы создаём события ArtFlow, чтобы юные артисты почувствовали сцену, поверили в свой талант и увезли с собой больше, чем результат выступления. Рядом остаются родители и педагоги: их поддержка помогает справиться с волнением и делает этот день общей тёплой историей.",
+    "footer_text": "Творческие конкурсы, где важны талант, поддержка и радость от большого сценического опыта."
+  },
+  "media": {
+    "hero_main": "/static/images/hero-main.webp",
+    "hero_main_small": "/static/images/hero-main-960.webp",
+    "hero_main_alt": "Участницы ArtFlow исполняют танцевальный номер на сцене",
+    "hero_main_width": 1600,
+    "hero_main_height": 1070,
+    "hero_secondary": "/static/images/hero-secondary.webp",
+    "hero_secondary_small": "/static/images/hero-secondary-720.webp",
+    "hero_secondary_alt": "Юная вокалистка выступает на сцене ArtFlow",
+    "hero_secondary_width": 1200,
+    "hero_secondary_height": 802,
+    "about": "/static/images/about-project.webp",
+    "about_small": "/static/images/about-project-960.webp",
+    "about_alt": "Команда ArtFlow ведёт творческое событие на сцене",
+    "about_width": 1600,
+    "about_height": 1070
+  },
+  "contacts": {
+    "email": "lemani1974@mail.ru",
+    "instagram": {
+      "label": "art_flow_karina",
+      "url": "https://www.instagram.com/art_flow_karina"
+    },
+    "organizers": [
+      {
+        "name": "Елена",
+        "role": "Организатор",
+        "note": "Поможет с выбором конкурса и ответит на вопросы об участии.",
+        "photo": "/static/images/organizer-1.webp",
+        "photo_small": "/static/images/organizer-1-480.webp",
+        "photo_alt": "Организатор ArtFlow Елена",
+        "photo_width": 800,
+        "photo_height": 1209,
+        "whatsapp_url": "https://wa.me/77052510210",
+        "telegram_url": "https://t.me/elenaflaum"
+      },
+      {
+        "name": "Марина",
+        "role": "Организатор",
+        "note": "Подскажет по программе, срокам и подготовке к событию.",
+        "photo": "/static/images/organizer-2.webp",
+        "photo_small": "/static/images/organizer-2-480.webp",
+        "photo_alt": "Организатор ArtFlow Марина",
+        "photo_width": 800,
+        "photo_height": 1062,
+        "whatsapp_url": "https://wa.me/77024122120",
+        "telegram_url": "https://t.me/Marishka_060483"
+      }
+    ]
+  },
+  "gallery": [
+    {
+      "src": "/static/images/gallery-01.webp",
+      "src_small": "/static/images/gallery-01-800.webp",
+      "alt": "Танцевальный коллектив выступает на сцене ArtFlow",
+      "caption": "Сцена, свет и командная энергия",
+      "width": 1400,
+      "height": 927
+    },
+    {
+      "src": "/static/images/gallery-02.webp",
+      "src_small": "/static/images/gallery-02-800.webp",
+      "alt": "Юная пианистка исполняет произведение на конкурсе ArtFlow",
+      "caption": "Музыка, которая звучит по-настоящему",
+      "width": 1400,
+      "height": 936
+    },
+    {
+      "src": "/static/images/gallery-03.webp",
+      "src_small": "/static/images/gallery-03-800.webp",
+      "alt": "Юный музыкант играет на домбре на сцене ArtFlow",
+      "caption": "Традиции встречаются с новым опытом",
+      "width": 1400,
+      "height": 936
+    },
+    {
+      "src": "/static/images/gallery-04.webp",
+      "src_small": "/static/images/gallery-04-800.webp",
+      "alt": "Танцевальный номер участниц конкурса ArtFlow",
+      "caption": "Каждый номер — отдельная история",
+      "width": 1400,
+      "height": 936
+    },
+    {
+      "src": "/static/images/gallery-05.webp",
+      "src_small": "/static/images/gallery-05-800.webp",
+      "alt": "Участницы хореографического коллектива ArtFlow в танце",
+      "caption": "Вместе смелее выходить на сцену",
+      "width": 1400,
+      "height": 936
+    },
+    {
+      "src": "/static/images/gallery-06.webp",
+      "src_small": "/static/images/gallery-06-800.webp",
+      "alt": "Вокалистка выступает перед зрителями ArtFlow",
+      "caption": "Момент, который хочется запомнить",
+      "width": 1400,
+      "height": 936
+    }
+  ],
+  "sections": {
+    "gallery_enabled": true,
+    "organizers_enabled": true,
+    "instagram_enabled": true,
+    "floating_contact_enabled": true
+  }
+}

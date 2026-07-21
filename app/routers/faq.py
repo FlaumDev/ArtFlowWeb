@@ -1,12 +1,11 @@
-from datetime import date
-
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.config import settings
 from app.database import DatabaseUnavailableError
 from app.services.faq import get_faq_items
+from app.site_content import get_site_content
+from app.web import page_context
 
 
 router = APIRouter()
@@ -25,16 +24,21 @@ async def faq(request: Request):
         load_error = True
         status_code = 503
 
+    site_content = get_site_content()
+    context = page_context(
+        request,
+        title="Частые вопросы об участии - ArtFlow",
+        description=(
+            "Ответы на частые вопросы об участии в конкурсах ArtFlow, "
+            "подготовке, заявке и организации событий."
+        ),
+        site_content=site_content,
+        active_page="faq",
+    )
+    context.update({"faq_items": faq_items, "load_error": load_error})
     return templates.TemplateResponse(
         request=request,
         name="faq.html",
-        context={
-            "request": request,
-            "title": "Частые вопросы - ArtFlow",
-            "current_year": date.today().year,
-            "faq_items": faq_items,
-            "load_error": load_error,
-            "telegram_url": settings.telegram_url,
-        },
+        context=context,
         status_code=status_code,
     )
