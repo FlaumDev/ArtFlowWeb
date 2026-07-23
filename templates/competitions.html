@@ -3,7 +3,7 @@
 {% block content %}
 <section class="competitions-hero" aria-labelledby="competitions-title">
     <div class="container competitions-hero-layout">
-        <div class="competitions-hero-copy">
+        <div class="competitions-hero-copy" data-reveal="hero">
             <p class="eyebrow">События ArtFlow</p>
             <h1 id="competitions-title">Конкурсы, к которым хочется готовиться</h1>
             <p>Выберите событие по городу, дате и творческому направлению. Все условия открыты до перехода к заявке.</p>
@@ -12,7 +12,7 @@
                 {% if site_content.has_contacts %}<a href="#contact">Нужна помощь с выбором? <span aria-hidden="true">→</span></a>{% endif %}
             </div>
         </div>
-        <div class="competitions-collage" aria-hidden="true">
+        <div class="competitions-collage" aria-hidden="true" data-reveal="hero" data-reveal-delay="70">
             {% if site_content.media.hero_main %}
                 <img src="{{ site_content.media.hero_main }}" {% if site_content.media.hero_main_small %}srcset="{{ site_content.media.hero_main_small }} 960w, {{ site_content.media.hero_main }} 1600w"{% endif %} sizes="(max-width: 760px) 65vw, 420px" alt="" width="{{ site_content.media.hero_main_width }}" height="{{ site_content.media.hero_main_height }}" loading="eager" decoding="async">
             {% endif %}
@@ -25,7 +25,7 @@
 
 <section class="page-section competitions-catalog" aria-labelledby="catalog-title">
     <div class="container">
-        <div class="catalog-heading">
+        <div class="catalog-heading" data-reveal>
             <div>
                 <p class="eyebrow">Расписание</p>
                 <h2 id="catalog-title">Найдите подходящее событие</h2>
@@ -36,7 +36,7 @@
         </div>
 
         {% if competitions and not load_error %}
-            <form class="competition-filters" data-competition-filters>
+            <form class="competition-filters" data-competition-filters data-reveal data-reveal-delay="70">
                 <label class="search-field">
                     <span>Поиск</span>
                     <span class="search-input-wrap">
@@ -65,6 +65,7 @@
         {% elif competitions %}
             <div class="competition-grid" data-competition-list>
                 {% for competition in competitions %}
+                    {% set reveal_delay = (loop.index0 % 3) * 70 %}
                     {% include "components/competition_card.html" %}
                 {% endfor %}
             </div>

@@ -1,24 +1,36 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
+# ElementTree only serializes application-owned values; it never parses XML input.
+from xml.etree.ElementTree import (  # nosec B405
+    Element,
+    SubElement,
+    tostring,
+)
 
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.cache import AsyncTTLCache
+from app.cache import ApplicationCaches, AsyncTTLCache
 from app.config import Settings, settings
 from app.database import (
+    DatabasePool,
     DatabaseUnavailableError,
     check_database_connection,
     close_database_pool,
     open_database_pool,
+)
+from app.observability import (
+    RequestLoggingMiddleware,
+    create_application_logger,
+    disable_duplicate_uvicorn_access_log,
 )
 from app.routers.competitions import router as competitions_router
 from app.routers.faq import router as faq_router
@@ -27,59 +39,88 @@ from app.security import (
     SECURITY_HEADERS,
     SecurityHeadersMiddleware,
 )
-from app.services.competitions import get_featured_competitions
+from app.services.competitions import get_competitions, get_featured_competitions
 from app.services.faq import get_faq_items
 from app.site_content import get_site_content
-from app.web import page_context, request_settings
+from app.web import (
+    page_context,
+    request_caches,
+    request_database_pool,
+    request_settings,
+)
 
 
-logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="templates")
 core_router = APIRouter()
-_health_db_cache: AsyncTTLCache[str, bool] = AsyncTTLCache(
-    ttl_seconds=5,
-    max_entries=1,
-)
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-    await open_database_pool(application.state.settings)
+    pool = await open_database_pool(application.state.settings)
+    application.state.database_pool = pool
     try:
         yield
     finally:
-        await close_database_pool()
+        await close_database_pool(pool)
+        application.state.database_pool = None
 
 
-async def _load_featured_for_homepage(app_settings: Settings | None = None):
+async def _load_featured_for_homepage(
+    app_settings: Settings | None = None,
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[tuple[Any, ...], list[dict[str, Any]]] | None = None,
+) -> tuple[list[dict[str, Any]], bool]:
     try:
         if app_settings is None:
             competitions = await get_featured_competitions()
         else:
             competitions = await get_featured_competitions(
-                app_settings=app_settings
+                app_settings=app_settings,
+                database_pool=database_pool,
+                cache=cache,
             )
         return competitions, False
     except DatabaseUnavailableError:
         return [], True
 
 
-async def _load_faq_for_homepage():
+async def _load_faq_for_homepage(
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[str, list[dict[str, Any]]] | None = None,
+) -> tuple[list[dict[str, Any]], bool]:
     try:
-        return (await get_faq_items())[:5], False
+        if database_pool is None and cache is None:
+            faq_items = await get_faq_items()
+        else:
+            faq_items = await get_faq_items(
+                database_pool=database_pool,
+                cache=cache,
+            )
+        return faq_items[:5], False
     except DatabaseUnavailableError:
         return [], True
 
 
 @core_router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index(request: Request) -> HTMLResponse:
     active_settings = request_settings(request)
+    database_pool = request_database_pool(request)
+    caches = request_caches(request)
     (
         (featured_competitions, competitions_unavailable),
         (faq_items, faq_unavailable),
     ) = await asyncio.gather(
-        _load_featured_for_homepage(active_settings),
-        _load_faq_for_homepage(),
+        _load_featured_for_homepage(
+            active_settings,
+            database_pool=database_pool,
+            cache=caches.competitions,
+        ),
+        _load_faq_for_homepage(
+            database_pool=database_pool,
+            cache=caches.faq,
+        ),
     )
     status_code = 503 if competitions_unavailable else 200
     site_content = get_site_content()
@@ -112,33 +153,95 @@ async def index(request: Request):
 
 
 @core_router.get("/health")
-async def health():
+async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@core_router.get("/robots.txt", response_class=PlainTextResponse)
+async def robots(request: Request) -> PlainTextResponse:
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /docs",
+        "Disallow: /redoc",
+        "Disallow: /openapi.json",
+    ]
+    public_base_url = request_settings(request).public_https_base_url
+    if public_base_url:
+        lines.append(f"Sitemap: {public_base_url}/sitemap.xml")
+    return PlainTextResponse("\n".join(lines) + "\n")
+
+
+def _sitemap_document(base_url: str | None, competition_ids: list[int]) -> bytes:
+    urlset = Element("urlset", xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
+    if base_url:
+        for path in ("/", "/competitions", "/faq"):
+            url = SubElement(urlset, "url")
+            SubElement(url, "loc").text = f"{base_url}{path}"
+        for competition_id in competition_ids:
+            url = SubElement(urlset, "url")
+            SubElement(url, "loc").text = (
+                f"{base_url}/competitions/{competition_id}"
+            )
+    return tostring(urlset, encoding="utf-8", xml_declaration=True)
+
+
+@core_router.get("/sitemap.xml")
+async def sitemap(request: Request) -> Response:
+    active_settings = request_settings(request)
+    public_base_url = active_settings.public_https_base_url
+    competition_ids: list[int] = []
+
+    if public_base_url:
+        try:
+            competitions = await get_competitions(
+                active_settings,
+                database_pool=request_database_pool(request),
+                cache=request_caches(request).competitions,
+            )
+        except DatabaseUnavailableError:
+            competitions = []
+        competition_ids = [
+            competition["id"]
+            for competition in competitions
+            if type(competition.get("id")) is int and competition["id"] > 0
+        ]
+
+    return Response(
+        content=_sitemap_document(public_base_url, competition_ids),
+        media_type="application/xml",
+    )
+
+
 @core_router.get("/health/db")
-async def health_db():
+async def health_db(request: Request) -> JSONResponse:
+    database_pool = request_database_pool(request)
+    cache = request_caches(request).health_db
+
     async def check() -> bool:
         try:
-            await check_database_connection()
+            await check_database_connection(database_pool)
         except DatabaseUnavailableError:
             return False
         return True
 
-    available = await _health_db_cache.get_or_load("database", check)
+    available = await cache.get_or_load("database", check)
     if not available:
         return JSONResponse(
             status_code=503,
             content={"status": "unavailable"},
         )
-    return {"status": "ok"}
+    return JSONResponse(content={"status": "ok"})
 
 
-def clear_health_cache() -> None:
-    _health_db_cache.clear()
+def clear_application_caches(application: FastAPI) -> None:
+    application.state.caches.clear()
 
 
-async def not_found(request: Request, _exc: StarletteHTTPException):
+async def not_found(
+    request: Request,
+    _exc: StarletteHTTPException,
+) -> HTMLResponse:
     site_content = get_site_content()
     return templates.TemplateResponse(
         request=request,
@@ -156,11 +259,7 @@ async def not_found(request: Request, _exc: StarletteHTTPException):
     )
 
 
-async def server_error(request: Request, exc: Exception):
-    logger.error(
-        "Unhandled request error",
-        exc_info=(type(exc), exc, exc.__traceback__),
-    )
+async def server_error(request: Request, _exc: Exception) -> HTMLResponse:
     site_content = get_site_content()
     response = templates.TemplateResponse(
         request=request,
@@ -184,11 +283,15 @@ async def server_error(request: Request, exc: Exception):
             and active_settings.public_https_base_url is not None
         ):
             response.headers["strict-transport-security"] = "max-age=31536000"
+    request_id = getattr(request.state, "request_id", None)
+    if request_id:
+        response.headers["x-request-id"] = request_id
     return response
 
 
 def create_app(app_settings: Settings | None = None) -> FastAPI:
     active_settings = app_settings or settings
+    disable_duplicate_uvicorn_access_log()
     docs_url = "/docs" if active_settings.enable_docs else None
     openapi_url = "/openapi.json" if active_settings.enable_docs else None
     redoc_url = "/redoc" if active_settings.enable_docs else None
@@ -201,6 +304,12 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
         openapi_url=openapi_url,
     )
     application.state.settings = active_settings
+    application.state.database_pool = None
+    application.state.caches = ApplicationCaches()
+    application.state.logger = create_application_logger(
+        active_settings,
+        name=f"artflow.application.{id(application):x}",
+    )
     application.mount("/static", StaticFiles(directory="static"), name="static")
     application.include_router(competitions_router)
     application.include_router(faq_router)
@@ -227,6 +336,10 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
                 else None
             ),
         )
+    application.add_middleware(
+        RequestLoggingMiddleware,
+        logger=application.state.logger,
+    )
     return application
 
 

@@ -1,0 +1,15 @@
+title = "ArtFlowWeb secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Explicit non-production credentials used only by isolated tests"
+regexTarget = "line"
+regexes = [
+  '''postgresql://web:password@(database|second)\.test:5432/artflow''',
+  '''postgresql://public_user:very-secret-password@example\.invalid/db''',
+  '''postgresql://user:DO_NOT_EXPOSE@database\.example/artflow''',
+  '''postgres://user:SECRET@host/database''',
+  '''integration-only-password''',
+]

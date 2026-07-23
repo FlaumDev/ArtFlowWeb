@@ -6,6 +6,7 @@ import pytest
 from fastapi import Request
 
 from app import database, main
+from app.cache import ApplicationCaches
 from app.config import Settings, settings
 from app.repositories import competitions as competitions_repository
 from app.routers import competitions as competition_routes
@@ -73,12 +74,14 @@ def competition_row(**overrides):
 def test_create_app_lifespan_passes_custom_settings_to_database(monkeypatch):
     selected_settings = custom_settings(production=True)
     received = []
+    selected_pool = object()
 
     async def open_pool(app_settings):
         received.append(app_settings)
+        return selected_pool
 
-    async def close_pool():
-        return None
+    async def close_pool(pool):
+        received.append(pool)
 
     monkeypatch.setattr(main, "open_database_pool", open_pool)
     monkeypatch.setattr(main, "close_database_pool", close_pool)
@@ -86,10 +89,76 @@ def test_create_app_lifespan_passes_custom_settings_to_database(monkeypatch):
 
     async def run_lifespan():
         async with application.router.lifespan_context(application):
-            pass
+            assert application.state.database_pool is selected_pool
+        assert application.state.database_pool is None
 
     asyncio.run(run_lifespan())
-    assert received == [selected_settings]
+    assert received == [selected_settings, selected_pool]
+
+
+def test_app_instances_keep_database_pools_and_caches_isolated(monkeypatch):
+    first_settings = custom_settings(production=False)
+    second_settings = replace(
+        custom_settings(production=True),
+        database_url="postgresql://web:password@second.test:5432/artflow",
+    )
+    pools = {}
+    closed = []
+
+    async def open_pool(app_settings):
+        pool = object()
+        pools[app_settings.database_dsn] = pool
+        return pool
+
+    async def close_pool(pool):
+        closed.append(pool)
+
+    monkeypatch.setattr(main, "open_database_pool", open_pool)
+    monkeypatch.setattr(main, "close_database_pool", close_pool)
+    first_app = main.create_app(first_settings)
+    second_app = main.create_app(second_settings)
+
+    async def run_lifespans():
+        async with first_app.router.lifespan_context(first_app):
+            async with second_app.router.lifespan_context(second_app):
+                assert first_app.state.database_pool is pools[
+                    first_settings.database_dsn
+                ]
+                assert second_app.state.database_pool is pools[
+                    second_settings.database_dsn
+                ]
+                assert (
+                    first_app.state.database_pool
+                    is not second_app.state.database_pool
+                )
+                assert first_app.state.caches is not second_app.state.caches
+
+    asyncio.run(run_lifespans())
+    assert set(closed) == set(pools.values())
+    assert not hasattr(database, "_pool")
+
+
+def test_health_db_cache_is_scoped_to_application(monkeypatch):
+    first_app = main.create_app(custom_settings(production=False))
+    second_app = main.create_app(custom_settings(production=False))
+    first_pool = object()
+    second_pool = object()
+    first_app.state.database_pool = first_pool
+    second_app.state.database_pool = second_pool
+    checked_pools = []
+
+    async def check_connection(pool):
+        checked_pools.append(pool)
+
+    monkeypatch.setattr(main, "check_database_connection", check_connection)
+
+    async def check_both_apps():
+        await main.health_db(request_for(first_app, "/health/db"))
+        await main.health_db(request_for(first_app, "/health/db"))
+        await main.health_db(request_for(second_app, "/health/db"))
+
+    asyncio.run(check_both_apps())
+    assert checked_pools == [first_pool, second_pool]
 
 
 def test_database_pool_uses_explicit_application_settings(monkeypatch):
@@ -108,13 +177,12 @@ def test_database_pool_uses_explicit_application_settings(monkeypatch):
             self.closed = True
 
     monkeypatch.setattr(database, "AsyncConnectionPool", FakePool)
-    monkeypatch.setattr(database, "_pool", None)
-    asyncio.run(database.open_database_pool(selected_settings))
+    pool = asyncio.run(database.open_database_pool(selected_settings))
 
     assert captured["conninfo"] == selected_settings.database_dsn
     assert "default_transaction_read_only=on" in captured["kwargs"]["options"]
     assert "statement_timeout=5000" in captured["kwargs"]["options"]
-    asyncio.run(database.close_database_pool())
+    asyncio.run(database.close_database_pool(pool))
 
 
 def test_route_uses_custom_production_settings_for_urls(monkeypatch):
@@ -122,7 +190,12 @@ def test_route_uses_custom_production_settings_for_urls(monkeypatch):
     application = main.create_app(selected_settings)
     received = []
 
-    async def get_competition(competition_id, app_settings=None):
+    async def get_competition(
+        competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         received.append(app_settings)
         return competitions_service._serialize_competition(
             competition_row(id=competition_id),
@@ -151,7 +224,7 @@ def test_route_uses_custom_production_settings_for_urls(monkeypatch):
 def test_cache_does_not_mix_development_and_production_settings(monkeypatch):
     calls = 0
 
-    async def published_competitions(limit=None):
+    async def published_competitions(limit=None, *, pool=None):
         nonlocal calls
         calls += 1
         return [competition_row()]
@@ -166,10 +239,12 @@ def test_cache_does_not_mix_development_and_production_settings(monkeypatch):
 
     async def load_both():
         development_items = await competitions_service.get_competitions(
-            development
+            development,
+            cache=ApplicationCaches().competitions,
         )
         production_items = await competitions_service.get_competitions(
-            production
+            production,
+            cache=ApplicationCaches().competitions,
         )
         return development_items, production_items
 
@@ -231,3 +306,55 @@ def test_url_without_hostname_is_rejected():
 def test_https_cdn_url_without_image_extension_is_preserved():
     url = "https://cdn.example.test/assets/poster?id=7"
     assert competitions_service._http_url(url) == url
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://127.0.0.1/poster",
+        "https://[::1]/poster",
+        "https://10.0.0.5/poster",
+        "https://[fd00::1]/poster",
+        "https://0.0.0.0/poster",
+        "https://[::]/poster",
+        "https://localhost/poster",
+        "https://assets/poster",
+        "https://127.1/poster",
+    ],
+)
+def test_production_rejects_non_public_url_hosts(url):
+    assert (
+        competitions_service._http_url(
+            url,
+            custom_settings(production=True),
+        )
+        is None
+    )
+
+
+def test_production_preserves_public_https_cdn_url():
+    url = "https://media.cdn-example.com/assets/poster?id=7"
+    assert (
+        competitions_service._http_url(
+            url,
+            custom_settings(production=True),
+        )
+        == url
+    )
+
+
+@pytest.mark.parametrize("app_env", ["development", "test"])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://127.0.0.1:8080/poster",
+        "http://localhost:8080/poster",
+        "http://assets/poster",
+    ],
+)
+def test_non_production_preserves_local_test_urls(app_env, url):
+    app_settings = replace(
+        custom_settings(production=False),
+        app_env=app_env,
+    )
+    assert competitions_service._http_url(url, app_settings) == url

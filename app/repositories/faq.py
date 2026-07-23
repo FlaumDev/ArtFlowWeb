@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.database import DatabaseUnavailableError, get_connection
+from app.database import DatabasePool, DatabaseUnavailableError, get_connection
 
 
 FaqRow = dict[str, Any]
@@ -18,9 +18,9 @@ _ALL_FAQ_SQL = """
 """
 
 
-async def get_all_faq() -> list[FaqRow]:
+async def get_all_faq(*, pool: DatabasePool | None) -> list[FaqRow]:
     try:
-        async with get_connection() as connection:
+        async with get_connection(pool) as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(_ALL_FAQ_SQL)
                 rows = await cursor.fetchall()

@@ -9,7 +9,7 @@
 - ArtFlowWeb выполняет только `SELECT` и не запускает миграции.
 - ArtFlowWeb не импортирует `database.py` или другой код ArtFlowBot.
 - SQL сайта использует параметры и явные списки столбцов, без `SELECT *`.
-- Все запросы получают соединение из одного `AsyncConnectionPool` процесса FastAPI.
+- Все запросы получают соединение из `AsyncConnectionPool` текущего экземпляра FastAPI; pool хранится в `app.state` и явно передаётся repository.
 - Значения подключения, пароли и traceback не возвращаются посетителю.
 
 ## 2. Публичная таблица `competitions`

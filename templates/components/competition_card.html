@@ -1,6 +1,8 @@
 <article
     class="competition-card"
     data-competition-card
+    data-reveal
+    data-reveal-delay="{{ reveal_delay | default(0) }}"
     data-status="{% if competition.registration_is_open %}open{% else %}closed{% endif %}"
     data-search="{{ competition.name }} {{ competition.city }} {{ competition.directions | join(' ') }}"
 >
@@ -15,15 +17,16 @@
                 class="poster-image"
                 src="{{ competition.poster_url }}"
                 alt="Афиша конкурса {{ competition.name }}"
+                width="1200"
+                height="900"
                 referrerpolicy="no-referrer"
                 loading="lazy"
                 decoding="async"
-                hidden
                 data-poster-image
             >
         {% endif %}
         <span class="poster-placeholder" data-poster-placeholder>
-            <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+            <img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
             <span>Афиша скоро появится</span>
         </span>
         <span class="poster-overlays">

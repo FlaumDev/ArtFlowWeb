@@ -5,26 +5,27 @@
     <div class="container">
         <a class="back-link" href="{{ url_for('competitions') }}"><span aria-hidden="true">←</span> Все конкурсы</a>
         <div class="event-hero-layout">
-            <div class="detail-poster poster-frame" aria-label="Афиша конкурса" data-poster>
+            <div class="detail-poster poster-frame" aria-label="Афиша конкурса" data-poster data-reveal="hero">
                 {% if competition.poster_url %}
                     <img
                         class="poster-image"
                         src="{{ competition.poster_url }}"
                         alt="Афиша конкурса {{ competition.name }}"
+                        width="1200"
+                        height="900"
                         referrerpolicy="no-referrer"
                         loading="eager"
                         decoding="async"
-                        hidden
                         data-poster-image
                     >
                 {% endif %}
                 <div class="poster-placeholder large" data-poster-placeholder>
-                    <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+                    <img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
                     <span>Афиша скоро появится</span>
                 </div>
             </div>
 
-            <div class="event-hero-copy">
+            <div class="event-hero-copy" data-reveal="hero" data-reveal-delay="70">
                 <div class="event-topline">
                     <p class="eyebrow">Конкурс ArtFlow</p>
                     <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
@@ -67,26 +68,26 @@
     <div class="container event-content-layout">
         <div class="event-main">
             <section class="event-facts" aria-labelledby="facts-title">
-                <div class="section-heading narrow">
+                <div class="section-heading narrow" data-reveal>
                     <p class="eyebrow">Главное о событии</p>
                     <h2 id="facts-title">Всё, что нужно запланировать</h2>
                 </div>
                 <dl class="facts-grid">
-                    <div><dt>Дата</dt><dd>{{ competition.event_date }}</dd></div>
-                    <div><dt>Подать заявку до</dt><dd>{{ competition.application_deadline }}</dd></div>
-                    <div><dt>Город</dt><dd>{{ competition.city }}</dd></div>
-                    <div><dt>Площадка</dt><dd>{{ competition.place }}</dd></div>
-                    <div><dt>Стоимость</dt><dd>{{ competition.price }}</dd></div>
+                    <div data-reveal><dt>Дата</dt><dd>{{ competition.event_date }}</dd></div>
+                    <div data-reveal data-reveal-delay="70"><dt>Подать заявку до</dt><dd>{{ competition.application_deadline }}</dd></div>
+                    <div data-reveal data-reveal-delay="140"><dt>Город</dt><dd>{{ competition.city }}</dd></div>
+                    <div data-reveal><dt>Площадка</dt><dd>{{ competition.place }}</dd></div>
+                    <div data-reveal data-reveal-delay="70"><dt>Стоимость</dt><dd>{{ competition.price }}</dd></div>
                 </dl>
             </section>
 
-            <section class="event-section" aria-labelledby="about-event-title">
+            <section class="event-section" aria-labelledby="about-event-title" data-reveal>
                 <p class="eyebrow">О конкурсе</p>
                 <h2 id="about-event-title">Событие для творческого роста</h2>
                 <p class="event-description">{{ competition.description }}</p>
             </section>
 
-            <section class="event-section directions-section" aria-labelledby="directions-title">
+            <section class="event-section directions-section" aria-labelledby="directions-title" data-reveal>
                 <p class="eyebrow">Направления</p>
                 <h2 id="directions-title">С чем можно выйти на сцену</h2>
                 {% if competition.directions %}
@@ -99,7 +100,7 @@
             </section>
 
             {% if competition.rules_url %}
-                <section class="rules-section" aria-labelledby="rules-title">
+                <section class="rules-section" aria-labelledby="rules-title" data-reveal>
                     <div>
                         <p class="eyebrow">Положение</p>
                         <h2 id="rules-title">Подробные правила участия</h2>
@@ -109,7 +110,7 @@
                 </section>
             {% endif %}
 
-            <section class="apply-section" aria-labelledby="apply-title">
+            <section class="apply-section" aria-labelledby="apply-title" data-reveal>
                 <div class="section-heading narrow">
                     <p class="eyebrow">Как подать заявку</p>
                     <h2 id="apply-title">Несколько понятных шагов</h2>
@@ -123,7 +124,7 @@
 
             {% if site_content.contacts.organizers %}
                 <section class="event-help" id="event-help" aria-labelledby="help-title">
-                    <div class="event-help-intro">
+                    <div class="event-help-intro" data-reveal>
                         <p class="eyebrow">Нужна помощь?</p>
                         <h2 id="help-title">Спросите организаторов</h2>
                         <p>Личные контакты предназначены для вопросов. Заявка подаётся только через кнопку конкурса.</p>
@@ -131,7 +132,7 @@
                     <div class="event-help-people">
                         {% for organizer in site_content.contacts.organizers %}
                             {% if organizer.whatsapp_url or organizer.telegram_url %}
-                                <article>
+                                <article data-reveal data-reveal-delay="{{ (loop.index0 % 3) * 70 }}">
                                     {% if organizer.photo %}<img src="{{ organizer.photo }}" {% if organizer.photo_small %}srcset="{{ organizer.photo_small }} 480w, {{ organizer.photo }} 800w"{% endif %} sizes="80px" alt="" width="{{ organizer.photo_width }}" height="{{ organizer.photo_height }}" loading="lazy" decoding="async">{% endif %}
                                     <div><h3>{{ organizer.name }}</h3><p>{{ organizer.role }}</p></div>
                                     <div class="help-links">

@@ -106,7 +106,9 @@ Repositories
 PostgreSQL
 ```
 
-Один `AsyncConnectionPool` создаётся на процесс FastAPI в lifespan приложения. Все repositories и `/health/db` используют этот пул; при остановке приложения пул закрывается.
+Каждый экземпляр FastAPI создаёт собственный `AsyncConnectionPool` в lifespan и сохраняет его в `app.state.database_pool`. Route передаёт pool через service в repository явно; repository не импортирует глобальное изменяемое состояние. `/health/db` использует pool того же приложения, а при завершении lifespan этот конкретный pool закрывается.
+
+TTL-cache также принадлежит экземпляру FastAPI и хранится в `app.state.caches`. Для списков конкурсов, отдельных конкурсов, FAQ и `/health/db` используются отдельные ограниченные кеши. `asyncio.Lock` защищает только короткие операции с состоянием, а per-key in-flight future объединяет одинаковые cache miss: разные ключи загружаются параллельно, и исключения loader не кешируются.
 
 ### Routes
 
@@ -134,6 +136,8 @@ PostgreSQL
 - что показывать при закрытой регистрации;
 - как очистить и подготовить FAQ для безопасного вывода.
 
+Бизнес-дата определяется через `APP_TIMEZONE` и `zoneinfo`. Service сравнивает PostgreSQL `DATE` с текущей датой этой зоны; серверная `date.today()` для дедлайна не используется.
+
 ### Repositories
 
 Содержат только работу с PostgreSQL:
@@ -148,7 +152,13 @@ PostgreSQL
 
 ### Static
 
-Содержит CSS, JavaScript, иконки и локальные публичные изображения сайта.
+Содержит CSS, JavaScript, иконки и локальные публичные изображения сайта. CSS
+подключается в фиксированном порядке: `base.css`, `components.css`, `pages.css`,
+`responsive.css`. Это сохраняет единый cascade без препроцессора и inline-стилей.
+
+### Observability
+
+ASGI middleware создаёт request ID, добавляет `X-Request-ID` в ответ и логирует route template, status code и duration. Development использует читаемые строки, production — JSON. Query string, тело запроса и текст исключения в application log не включаются; для исключения сохраняются только тип и стек без значения ошибки.
 
 ## 6. Продающая логика
 

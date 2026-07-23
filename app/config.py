@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import ipaddress
 import os
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dotenv import load_dotenv
 from psycopg.conninfo import make_conninfo
@@ -16,6 +19,10 @@ _TRUE_VALUES = {"1", "true", "yes", "on"}
 _FALSE_VALUES = {"0", "false", "no", "off"}
 _DEVELOPMENT_HOSTS = ("127.0.0.1", "localhost", "testserver")
 _ALLOWED_APP_ENVS = ("development", "test", "production")
+_DEFAULT_APP_TIMEZONE = "Asia/Almaty"
+_PUBLIC_DNS_LABEL = re.compile(
+    r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+)
 
 
 def _optional_env(name: str) -> str | None:
@@ -80,6 +87,42 @@ def _app_env(value: str | None) -> str:
     return app_env
 
 
+def _app_timezone(value: str | None) -> str:
+    timezone_name = (value or _DEFAULT_APP_TIMEZONE).strip()
+    try:
+        ZoneInfo(timezone_name)
+    except (ValueError, ZoneInfoNotFoundError):
+        raise ValueError(
+            "APP_TIMEZONE must be a valid IANA timezone name"
+        ) from None
+    return timezone_name
+
+
+def is_public_hostname(hostname: str) -> bool:
+    normalized = hostname.casefold().rstrip(".")
+    if normalized == "localhost" or normalized.endswith(".localhost"):
+        return False
+
+    try:
+        address = ipaddress.ip_address(normalized)
+    except ValueError:
+        try:
+            ascii_hostname = normalized.encode("idna").decode("ascii")
+        except UnicodeError:
+            return False
+        labels = ascii_hostname.split(".")
+        return (
+            len(labels) >= 2
+            and not labels[-1].isdigit()
+            and all(_PUBLIC_DNS_LABEL.fullmatch(label) for label in labels)
+        )
+    return not (
+        address.is_loopback
+        or address.is_private
+        or address.is_unspecified
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     database_url: str | None = field(repr=False)
@@ -94,11 +137,17 @@ class Settings:
     allowed_hosts: tuple[str, ...]
     enable_docs: bool
     enable_security_headers: bool
+    app_timezone: str
 
     def __post_init__(self) -> None:
         if self.app_env not in _ALLOWED_APP_ENVS:
             allowed = ", ".join(_ALLOWED_APP_ENVS)
             raise ValueError(f"APP_ENV must be one of: {allowed}")
+        object.__setattr__(
+            self,
+            "app_timezone",
+            _app_timezone(self.app_timezone),
+        )
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -123,11 +172,16 @@ class Settings:
                 "ENABLE_SECURITY_HEADERS",
                 default=True,
             ),
+            app_timezone=_app_timezone(_optional_env("APP_TIMEZONE")),
         )
 
     @property
     def is_production(self) -> bool:
         return self.app_env.casefold() == "production"
+
+    @property
+    def timezone(self) -> ZoneInfo:
+        return ZoneInfo(self.app_timezone)
 
     @property
     def trusted_hosts(self) -> tuple[str, ...]:
@@ -141,6 +195,12 @@ class Settings:
         if not self.is_production:
             return None
 
+        if any(
+            unicodedata.category(character) == "Cc"
+            for character in self.base_url
+        ):
+            return None
+
         try:
             parsed = urlsplit(self.base_url)
             parsed.port
@@ -150,7 +210,8 @@ class Settings:
         if (
             parsed.scheme.casefold() != "https"
             or not parsed.hostname
-            or parsed.hostname.casefold() in {"localhost", "127.0.0.1", "::1"}
+            or any(character.isspace() for character in parsed.hostname)
+            or not is_public_hostname(parsed.hostname)
             or parsed.username
             or parsed.password
             or parsed.query

@@ -2,12 +2,19 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlsplit
 
 from app.cache import AsyncTTLCache
-from app.config import Settings, normalize_bot_username, settings
+from app.clock import current_date
+from app.config import (
+    Settings,
+    is_public_hostname,
+    normalize_bot_username,
+    settings,
+)
+from app.database import DatabasePool
 from app.repositories import competitions as competitions_repository
 
 
@@ -16,18 +23,6 @@ Competition = dict[str, Any]
 _DIRECTIONS_SEPARATOR = re.compile(r"[,;\r\n]+")
 _DEFAULT_SHORT_DESCRIPTION = "Краткая информация о конкурсе скоро появится."
 _DEFAULT_DESCRIPTION = "Подробная информация о конкурсе скоро появится."
-_PUBLIC_CACHE_TTL_SECONDS = 30
-
-_competitions_cache: AsyncTTLCache[tuple[Any, ...], list[Competition]] = AsyncTTLCache(
-    ttl_seconds=_PUBLIC_CACHE_TTL_SECONDS,
-    max_entries=8,
-)
-_competition_detail_cache: AsyncTTLCache[
-    tuple[Any, ...], Competition | None
-] = AsyncTTLCache(
-    ttl_seconds=_PUBLIC_CACHE_TTL_SECONDS,
-    max_entries=64,
-)
 
 
 def _text(value: Any) -> str | None:
@@ -106,8 +101,9 @@ def _http_url(
     ):
         return None
     active_settings = app_settings or settings
-    if active_settings.is_production and scheme != "https":
-        return None
+    if active_settings.is_production:
+        if scheme != "https" or not is_public_hostname(hostname):
+            return None
 
     return url
 
@@ -137,7 +133,10 @@ def _telegram_url(
 def _serialize_competition(
     row: Competition,
     app_settings: Settings | None = None,
+    *,
+    now: datetime | None = None,
 ) -> Competition:
+    active_settings = app_settings or settings
     name = _text(row.get("name")) or "Конкурс ArtFlow"
     raw_short_description = _text(row.get("short_description"))
     raw_description = _text(row.get("description"))
@@ -160,74 +159,101 @@ def _serialize_competition(
         "city": _text(row.get("city")) or "Город уточняется",
         "place": _text(row.get("place")) or "Место уточняется",
         "directions": _directions(row.get("directions")),
-        "poster_url": _http_url(row.get("poster_url"), app_settings),
-        "rules_url": _http_url(row.get("rules_url"), app_settings),
+        "poster_url": _http_url(row.get("poster_url"), active_settings),
+        "rules_url": _http_url(row.get("rules_url"), active_settings),
         "price": _text(row.get("price")) or "Стоимость уточняется",
         "registration_is_open": (
-            deadline_value is not None and date.today() <= deadline_value
+            deadline_value is not None
+            and current_date(active_settings, now=now) <= deadline_value
         ),
-        "telegram_url": _telegram_url(row.get("id"), app_settings),
+        "telegram_url": _telegram_url(row.get("id"), active_settings),
     }
-
-
-def _settings_cache_key(app_settings: Settings) -> tuple[bool, str | None]:
-    return (app_settings.is_production, app_settings.bot_username)
 
 
 async def get_competitions(
     app_settings: Settings | None = None,
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[tuple[Any, ...], list[Competition]] | None = None,
+    now: datetime | None = None,
 ) -> list[Competition]:
     active_settings = app_settings or settings
 
     async def load() -> list[Competition]:
-        rows = await competitions_repository.get_published_competitions()
-        return [_serialize_competition(row, active_settings) for row in rows]
+        rows = await competitions_repository.get_published_competitions(
+            pool=database_pool
+        )
+        serialized_at = now or datetime.now(timezone.utc)
+        return [
+            _serialize_competition(
+                row,
+                active_settings,
+                now=serialized_at,
+            )
+            for row in rows
+        ]
 
-    cache_key = ("all", *_settings_cache_key(active_settings))
-    return await _competitions_cache.get_or_load(cache_key, load)
+    if cache is None:
+        return await load()
+    return await cache.get_or_load(("all",), load)
 
 
 async def get_featured_competitions(
     limit: int = 3,
     app_settings: Settings | None = None,
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[tuple[Any, ...], list[Competition]] | None = None,
+    now: datetime | None = None,
 ) -> list[Competition]:
     active_settings = app_settings or settings
     safe_limit = max(1, min(limit, 12))
 
     async def load() -> list[Competition]:
         rows = await competitions_repository.get_published_competitions(
-            limit=safe_limit
+            limit=safe_limit,
+            pool=database_pool,
         )
-        return [_serialize_competition(row, active_settings) for row in rows]
+        serialized_at = now or datetime.now(timezone.utc)
+        return [
+            _serialize_competition(
+                row,
+                active_settings,
+                now=serialized_at,
+            )
+            for row in rows
+        ]
 
-    cache_key = (
-        "featured",
-        safe_limit,
-        *_settings_cache_key(active_settings),
-    )
-    return await _competitions_cache.get_or_load(cache_key, load)
+    if cache is None:
+        return await load()
+    return await cache.get_or_load(("featured", safe_limit), load)
 
 
 async def get_competition_by_id(
     competition_id: int,
     app_settings: Settings | None = None,
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[int, Competition | None] | None = None,
+    now: datetime | None = None,
 ) -> Competition | None:
     active_settings = app_settings or settings
 
     async def load() -> Competition | None:
         row = await competitions_repository.get_published_competition_by_id(
-            competition_id
+            competition_id,
+            pool=database_pool,
         )
         return (
-            _serialize_competition(row, active_settings)
+            _serialize_competition(
+                row,
+                active_settings,
+                now=now or datetime.now(timezone.utc),
+            )
             if row is not None
             else None
         )
 
-    cache_key = (competition_id, *_settings_cache_key(active_settings))
-    return await _competition_detail_cache.get_or_load(cache_key, load)
-
-
-def clear_competition_cache() -> None:
-    _competitions_cache.clear()
-    _competition_detail_cache.clear()
+    if cache is None:
+        return await load()
+    return await cache.get_or_load(competition_id, load)
