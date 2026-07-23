@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUTF8: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  quality-security:
+    name: Unit and security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+      - name: Install verified runtime and test tools
+        run: python -m pip install -r requirements-dev.lock
+      - name: Compile Python
+        run: python -m compileall app scripts
+      - name: Run unit tests
+        run: python -m pytest -q
+      - name: Enforce unit coverage
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=85
+      - name: Run Bandit
+        run: python -m bandit -r app scripts
+      - name: Check installed dependencies
+        run: python -m pip check
+      - name: Audit locked runtime dependencies
+        run: python -m pip_audit -r requirements.lock
+      - name: Validate production settings
+        env:
+          APP_ENV: production
+          APP_TIMEZONE: Asia/Almaty
+          BASE_URL: https://artflow.example.test
+          ALLOWED_HOSTS: artflow.example.test,artflow-production.up.railway.app
+          ENABLE_DOCS: "false"
+          ENABLE_SECURITY_HEADERS: "true"
+        run: python -m scripts.check_production_settings
+
+  secret-scan:
+    name: Git history secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan commits with Gitleaks
+        uses: docker://ghcr.io/gitleaks/gitleaks:v8.28.0
+        with:
+          args: git --redact --verbose --config=.gitleaks.toml --log-opts=--all .
+
+  integration:
+    name: PostgreSQL integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: artflow_test
+          POSTGRES_USER: artflow_test
+          POSTGRES_PASSWORD: integration-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U artflow_test -d artflow_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ARTFLOW_INTEGRATION_DATABASE_URL: postgresql://artflow_test:integration-only-password@127.0.0.1:5432/artflow_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+      - name: Install verified runtime and pytest
+        run: python -m pip install -r requirements-dev.lock
+      - name: Initialize isolated schema
+        run: psql "$ARTFLOW_INTEGRATION_DATABASE_URL" --set ON_ERROR_STOP=1 --file tests/integration/init.sql
+      - name: Run integration tests
+        run: python -m pytest -m integration
+
+  e2e:
+    name: Browser E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+            requirements-e2e.lock
+      - name: Install application and E2E tools
+        run: python -m pip install -r requirements-e2e.lock
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Run browser tests
+        env:
+          APP_ENV: test
+        run: python -m pytest -m e2e

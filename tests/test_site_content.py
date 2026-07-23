@@ -38,16 +38,30 @@ def install_route_fakes(monkeypatch, site_content=None):
     competition = sample_competition()
     content = site_content or get_site_content()
 
-    async def featured_competitions(limit=3, app_settings=None):
+    async def featured_competitions(
+        limit=3,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         return [competition][:limit]
 
-    async def all_competitions(app_settings=None):
+    async def all_competitions(
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         return [competition]
 
-    async def one_competition(competition_id, app_settings=None):
+    async def one_competition(
+        competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         return competition if competition_id == competition["id"] else None
 
-    async def faq_items():
+    async def faq_items(database_pool=None, cache=None):
         return [{"id": 1, "question": "Как участвовать?", "answer": "Выберите конкурс."}]
 
     monkeypatch.setattr(main, "get_featured_competitions", featured_competitions)

@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from app.database import DatabaseUnavailableError
 from app.services.faq import get_faq_items
 from app.site_content import get_site_content
-from app.web import page_context
+from app.web import page_context, request_caches, request_database_pool
 
 
 router = APIRouter()
@@ -13,12 +13,17 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/faq", response_class=HTMLResponse, name="faq")
-async def faq(request: Request):
+async def faq(request: Request) -> HTMLResponse:
     load_error = False
     status_code = 200
+    database_pool = request_database_pool(request)
+    caches = request_caches(request)
 
     try:
-        faq_items = await get_faq_items()
+        faq_items = await get_faq_items(
+            database_pool=database_pool,
+            cache=caches.faq,
+        )
     except DatabaseUnavailableError:
         faq_items = []
         load_error = True

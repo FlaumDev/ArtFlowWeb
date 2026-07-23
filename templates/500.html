@@ -7,13 +7,13 @@
             <p class="error-code">500</p>
             <p class="eyebrow">Что-то пошло не так</p>
             <h1 id="server-error-title">Эта страница временно недоступна</h1>
-            <p>Мы уже можем увидеть ошибку в журнале сервера. Попробуйте вернуться к расписанию или открыть главную страницу.</p>
+            <p>Попробуйте вернуться к расписанию или открыть главную страницу немного позже.</p>
             <div class="hero-actions">
                 <a class="button primary" href="{{ url_for('competitions') }}">К конкурсам <span aria-hidden="true">→</span></a>
                 <a class="button button-quiet" href="{{ url_for('index') }}">На главную</a>
             </div>
         </div>
-        <div class="error-logo" aria-hidden="true"><img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt=""></div>
+        <div class="error-logo" aria-hidden="true"><img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512"></div>
     </div>
 </section>
 {% endblock %}

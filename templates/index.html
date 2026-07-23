@@ -3,7 +3,7 @@
 {% block content %}
 <section class="home-hero" aria-labelledby="hero-title">
     <div class="container hero-layout">
-        <div class="hero-copy">
+        <div class="hero-copy" data-reveal="hero">
             <p class="eyebrow">{{ site_content.brand.hero_eyebrow }}</p>
             <h1 id="hero-title">{{ site_content.brand.hero_title }}</h1>
             <p class="hero-lead">{{ site_content.brand.hero_text }}</p>
@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <div class="hero-visual" aria-label="Атмосфера событий ArtFlow">
+        <div class="hero-visual" aria-label="Атмосфера событий ArtFlow" data-reveal="hero" data-reveal-delay="70">
             {% set nearest = featured_competitions[0] if featured_competitions else none %}
             <div class="hero-photo-main poster-frame" data-poster>
                 {% if site_content.media.hero_main %}
@@ -44,18 +44,19 @@
                         class="poster-image"
                         src="{{ nearest.poster_url }}"
                         alt="Афиша конкурса {{ nearest.name }}"
+                        width="1200"
+                        height="900"
                         referrerpolicy="no-referrer"
                         loading="eager"
                         decoding="async"
-                        hidden
                         data-poster-image
                     >
                     <div class="hero-logo-fallback" data-poster-placeholder>
-                        <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+                        <img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
                     </div>
                 {% else %}
                     <div class="hero-logo-fallback">
-                        <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+                        <img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
                     </div>
                 {% endif %}
             </div>
@@ -88,24 +89,24 @@
 
 <section class="trust-strip" aria-labelledby="advantages-title">
     <div class="container">
-        <div class="section-heading narrow">
+        <div class="section-heading narrow" data-reveal>
             <p class="eyebrow">Спокойно на каждом этапе</p>
             <h2 id="advantages-title">Всё важное для участия — на виду</h2>
         </div>
         <div class="trust-list">
-            <article>
+            <article data-reveal>
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 3v4m10-4v4M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m8 14 2 2 5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <div><h3>Ясные сроки</h3><p>Дата события и последний день подачи заявки указаны в карточке.</p></div>
             </article>
-            <article>
+            <article data-reveal data-reveal-delay="70">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21s7-4 7-11V5l-7-2-7 2v5c0 7 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m9 12 2 2 4-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <div><h3>Все условия собраны в одном месте</h3><p>Город, площадка, направления и стоимость доступны до подачи заявки.</p></div>
             </article>
-            <article>
+            <article data-reveal data-reveal-delay="140">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
                 <div><h3>Живая поддержка</h3><p>Организаторы помогут выбрать конкурс и уточнить детали.</p></div>
             </article>
-            <article>
+            <article data-reveal data-reveal-delay="210">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 3-7.5 18-4.2-7.3L2 9.5 21 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9.3 13.7 4-3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <div><h3>Удобная заявка</h3><p>После выбора события оформление продолжается в Telegram-боте.</p></div>
             </article>
@@ -115,7 +116,7 @@
 
 <section class="page-section competitions-preview" aria-labelledby="nearest-title">
     <div class="container">
-        <div class="section-row">
+        <div class="section-row" data-reveal>
             <div class="section-heading narrow">
                 <p class="eyebrow">Ближайшие события</p>
                 <h2 id="nearest-title">Выберите свою сцену</h2>
@@ -132,6 +133,7 @@
         {% elif featured_competitions %}
             <div class="competition-grid">
                 {% for competition in featured_competitions %}
+                    {% set reveal_delay = (loop.index0 % 3) * 70 %}
                     {% include "components/competition_card.html" %}
                 {% endfor %}
             </div>
@@ -147,7 +149,7 @@
 {% if site_content.sections.gallery_enabled and site_content.gallery %}
 <section class="gallery-section" id="gallery" aria-labelledby="gallery-title">
     <div class="container">
-        <div class="section-row gallery-heading-row">
+        <div class="section-row gallery-heading-row" data-reveal>
             <div class="section-heading narrow">
                 <p class="eyebrow">В центре событий</p>
                 <h2 id="gallery-title">Как проходят события ArtFlow</h2>
@@ -160,7 +162,7 @@
 
         <div class="gallery-grid">
             {% for image in site_content.gallery %}
-                <figure class="gallery-item gallery-item-{{ loop.index }}">
+                <figure class="gallery-item gallery-item-{{ loop.index }}" data-reveal data-reveal-delay="{{ (loop.index0 % 3) * 70 }}">
                     <img
                         src="{{ image.src }}"
                         {% if image.src_small %}srcset="{{ image.src_small }} 800w, {{ image.src }} 1400w"{% endif %}
@@ -181,7 +183,7 @@
 
 <section class="about-section" id="about" aria-labelledby="about-title">
     <div class="container about-layout">
-        <div class="about-visual">
+        <div class="about-visual" data-reveal>
             {% if site_content.media.about %}
                 <img
                     src="{{ site_content.media.about }}"
@@ -195,13 +197,13 @@
                 >
             {% else %}
                 <div class="about-logo-fallback">
-                    <img src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+                    <img src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
                 </div>
             {% endif %}
             <p class="about-photo-note">Талант раскрывается там, где есть внимание и поддержка.</p>
         </div>
 
-        <div class="about-copy">
+        <div class="about-copy" data-reveal data-reveal-delay="70">
             <p class="eyebrow">О проекте</p>
             <h2 id="about-title">{{ site_content.brand.about_title }}</h2>
             <p class="about-lead">{{ site_content.brand.about_text }}</p>
@@ -216,27 +218,27 @@
 
 <section class="steps-section" aria-labelledby="steps-title">
     <div class="container">
-        <div class="section-heading centered narrow">
+        <div class="section-heading centered narrow" data-reveal>
             <p class="eyebrow">Путь к участию</p>
             <h2 id="steps-title">От выбора до выхода на сцену</h2>
         </div>
         <ol class="journey-list">
-            <li>
+            <li data-reveal>
                 <span class="journey-number">1</span>
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8m-8 4h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <div><h3>Найдите конкурс</h3><p>Выберите город, дату и творческое направление.</p></div>
             </li>
-            <li>
+            <li data-reveal data-reveal-delay="70">
                 <span class="journey-number">2</span>
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 8h6m-6 4h6m-6 4h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <div><h3>Изучите условия</h3><p>Проверьте программу, стоимость и срок подачи.</p></div>
             </li>
-            <li>
+            <li data-reveal data-reveal-delay="140">
                 <span class="journey-number">3</span>
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 3-7.5 18-4.2-7.3L2 9.5 21 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
                 <div><h3>Перейдите к заявке</h3><p>Откройте Telegram-бот со страницы выбранного конкурса.</p></div>
             </li>
-            <li>
+            <li data-reveal data-reveal-delay="210">
                 <span class="journey-number">4</span>
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 12h8M12 8v8M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                 <div><h3>Получите поддержку</h3><p>Уточните детали у организаторов удобным способом.</p></div>
@@ -248,7 +250,7 @@
 {% if site_content.sections.organizers_enabled and site_content.contacts.organizers %}
 <section class="organizers-section" aria-labelledby="organizers-title">
     <div class="container organizers-layout">
-        <div class="organizers-intro">
+        <div class="organizers-intro" data-reveal>
             <p class="eyebrow">Команда ArtFlow</p>
             <h2 id="organizers-title">Люди, которые всегда на связи</h2>
             <p>Можно спросить о направлениях, сроках или подготовке к участию. Ответит живой человек, знакомый с программой события.</p>
@@ -256,7 +258,7 @@
 
         <div class="organizer-cards">
             {% for organizer in site_content.contacts.organizers %}
-                <article class="organizer-card">
+                <article class="organizer-card" data-reveal data-reveal-delay="{{ (loop.index0 % 3) * 70 }}">
                     <div class="organizer-photo">
                         {% if organizer.photo %}
                             <img
@@ -270,7 +272,7 @@
                                 decoding="async"
                             >
                         {% else %}
-                            <img class="organizer-logo-fallback" src="{{ url_for('static', path='/images/artflow-logo.png') }}" alt="" aria-hidden="true">
+                            <img class="organizer-logo-fallback" src="{{ url_for('static', path='/images/artflow-logo-512.png') }}" alt="" width="512" height="512" aria-hidden="true">
                         {% endif %}
                     </div>
                     <div class="organizer-card-body">
@@ -294,7 +296,7 @@
 
 <section class="home-faq" aria-labelledby="faq-title">
     <div class="container faq-layout">
-        <div class="section-heading narrow">
+        <div class="section-heading narrow" data-reveal>
             <p class="eyebrow">Частые вопросы</p>
             <h2 id="faq-title">Спокойные ответы перед заявкой</h2>
             <p>Собрали основные вопросы об участии, подготовке и работе заявки.</p>
@@ -312,7 +314,7 @@
 
 {% if site_content.sections.instagram_enabled and site_content.contacts.instagram.url %}
 <section class="instagram-section" aria-labelledby="instagram-title">
-    <div class="container instagram-layout">
+    <div class="container instagram-layout" data-reveal>
         <div class="instagram-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
         </div>

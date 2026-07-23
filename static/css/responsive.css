@@ -1,0 +1,870 @@
+@media (max-width: 1120px) {
+    .container {
+        width: min(var(--container), calc(100% - 48px));
+    }
+
+    .site-nav {
+        gap: 17px;
+    }
+
+    .header-contact-button {
+        display: none;
+    }
+
+    .hero-layout {
+        grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+        gap: 42px;
+    }
+
+    h1 {
+        font-size: 54px;
+    }
+
+    .trust-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px 0;
+    }
+
+    .trust-list article:nth-child(3) {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .about-layout,
+    .organizers-layout {
+        gap: 52px;
+    }
+
+    .event-content-layout {
+        gap: 42px;
+    }
+}
+
+@media (max-width: 960px) {
+    html {
+        scroll-padding-top: 88px;
+    }
+
+    h2 {
+        font-size: 36px;
+    }
+
+    .header-inner {
+        min-height: 74px;
+    }
+
+    .brand-logo {
+        max-width: 62px;
+        max-height: 58px;
+    }
+
+    .nav-toggle {
+        display: block;
+    }
+
+    .site-menu {
+        position: fixed;
+        z-index: 99;
+        top: 82px;
+        right: 18px;
+        left: 18px;
+        display: none;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        padding: 26px;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: var(--shadow-photo);
+    }
+
+    .site-menu.is-open {
+        display: block;
+        animation: panel-in 180ms ease both;
+    }
+
+    .site-nav {
+        display: grid;
+        gap: 3px;
+    }
+
+    .site-nav a {
+        min-height: 52px;
+        padding: 4px 10px;
+        border-radius: 13px;
+        font-size: 18px;
+    }
+
+    .site-nav a::after {
+        display: none;
+    }
+
+    .site-nav a[aria-current="page"] {
+        color: var(--color-red-dark);
+        background: var(--color-blush);
+    }
+
+    .header-actions {
+        display: grid;
+        margin-top: 18px;
+    }
+
+    .mobile-menu-contacts {
+        display: grid;
+        gap: 10px;
+        padding: 20px 10px 0;
+        margin-top: 18px;
+        border-top: 1px solid #eee7e3;
+    }
+
+    .mobile-menu-contacts > p {
+        color: var(--color-muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .mobile-menu-contacts > div {
+        display: flex;
+        min-height: 44px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px 14px;
+    }
+
+    .mobile-menu-contacts strong {
+        min-width: 72px;
+    }
+
+    .mobile-menu-contacts a {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        color: var(--color-red-dark);
+        font-size: 13px;
+        font-weight: 740;
+    }
+
+    .contact-popover {
+        display: none;
+    }
+
+    .header-cta {
+        min-height: 52px;
+    }
+
+    .hero-layout,
+    .about-layout,
+    .organizers-layout,
+    .faq-layout,
+    .competitions-hero-layout,
+    .event-hero-layout,
+    .event-content-layout,
+    .faq-hero-layout,
+    .faq-page-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .home-hero {
+        padding-top: 52px;
+    }
+
+    .hero-layout {
+        gap: 50px;
+    }
+
+    .hero-copy {
+        max-width: 730px;
+    }
+
+    .hero-visual {
+        max-width: 760px;
+        padding-right: 68px;
+    }
+
+    .competition-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gallery-grid {
+        grid-auto-rows: 180px;
+    }
+
+    .about-visual {
+        max-width: 760px;
+    }
+
+    .about-photo-note {
+        right: 18px;
+    }
+
+    .organizers-intro {
+        max-width: 680px;
+    }
+
+    .organizer-cards {
+        max-width: 760px;
+    }
+
+    .faq-layout {
+        gap: 40px;
+    }
+
+    .instagram-layout {
+        grid-template-columns: 70px 1fr;
+    }
+
+    .instagram-button {
+        width: max-content;
+        grid-column: 2;
+    }
+
+    .contact-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-intro {
+        max-width: 680px;
+    }
+
+    .contact-socials {
+        grid-column: auto;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1.2fr 0.8fr 1fr;
+    }
+
+    .footer-meta {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+    }
+
+    .competitions-hero-layout,
+    .faq-hero-layout {
+        gap: 42px;
+    }
+
+    .competitions-collage {
+        max-width: 670px;
+    }
+
+    .competition-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-reset {
+        width: max-content;
+    }
+
+    .event-hero-layout {
+        align-items: start;
+        grid-template-columns: minmax(260px, 0.65fr) minmax(0, 1.35fr);
+        gap: 38px;
+    }
+
+    .event-content-layout {
+        gap: 60px;
+    }
+
+    .event-summary,
+    .faq-contact {
+        position: static;
+    }
+
+    .event-summary {
+        display: none;
+    }
+
+    .event-help {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-sticky-cta {
+        position: fixed;
+        z-index: 85;
+        right: 16px;
+        bottom: 14px;
+        left: 16px;
+        display: flex;
+        min-height: 68px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 9px 9px 9px 18px;
+        border-radius: 22px;
+        color: #fff;
+        background: var(--color-plum);
+        box-shadow: var(--shadow-photo);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(18px);
+        visibility: hidden;
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+    }
+
+    .detail-sticky-cta.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+        visibility: visible;
+    }
+
+    .detail-sticky-cta > span {
+        font-size: 12px;
+        font-weight: 720;
+    }
+
+    .detail-sticky-cta .button {
+        min-height: 50px;
+    }
+
+    body.has-sticky-cta {
+        padding-bottom: 96px;
+    }
+
+    body.has-sticky-cta .floating-contact {
+        bottom: 96px;
+    }
+}
+
+@media (max-width: 720px) {
+    .container {
+        width: min(var(--container), calc(100% - 32px));
+    }
+
+    h1,
+    .competitions-hero-copy h1,
+    .event-hero-copy h1,
+    .faq-hero h1,
+    .error-layout h1 {
+        font-size: 40px;
+    }
+
+    h2 {
+        font-size: 31px;
+    }
+
+    .page-section,
+    .about-section,
+    .home-faq,
+    .organizers-section {
+        padding: 76px 0;
+    }
+
+    .home-hero {
+        padding: 42px 0 72px;
+    }
+
+    .hero-layout {
+        min-height: 0;
+    }
+
+    .hero-lead {
+        font-size: 17px;
+    }
+
+    .hero-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .hero-actions .button {
+        width: 100%;
+    }
+
+    .hero-visual {
+        padding: 0 34px 78px 0;
+    }
+
+    .hero-photo-main {
+        aspect-ratio: 1.05;
+        border-radius: 34px 34px 18px 34px;
+    }
+
+    .hero-photo-secondary {
+        width: 42%;
+        border-width: 5px;
+        border-radius: 21px 21px 30px 21px;
+    }
+
+    .hero-event-note {
+        bottom: 10px;
+        left: -6px;
+        width: 212px;
+        min-height: 108px;
+        padding: 16px 18px;
+    }
+
+    .hero-event-note strong {
+        font-size: 18px;
+    }
+
+    .trust-strip {
+        padding: 68px 0;
+    }
+
+    .trust-list {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .trust-list article,
+    .trust-list article:nth-child(3) {
+        padding: 21px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        border-left: 0;
+    }
+
+    .trust-list article:first-child {
+        border-top: 0;
+    }
+
+    .section-row,
+    .catalog-heading,
+    .gallery-heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .competition-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .competition-card-body {
+        min-height: 300px;
+    }
+
+    .gallery-section {
+        padding: 78px 0 86px;
+    }
+
+    .gallery-grid {
+        display: flex;
+        width: 100%;
+        gap: 14px;
+        overflow-x: auto;
+        padding: 0 16px 10px 0;
+        scroll-padding-left: 0;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+    }
+
+    .gallery-item,
+    .gallery-item-1,
+    .gallery-item-2,
+    .gallery-item-3,
+    .gallery-item-4,
+    .gallery-item-5,
+    .gallery-item-6 {
+        width: min(82vw, 390px);
+        height: 400px;
+        flex: 0 0 auto;
+        border-radius: 28px;
+        scroll-snap-align: start;
+    }
+
+    .about-layout {
+        gap: 62px;
+    }
+
+    .about-visual,
+    .about-visual > img,
+    .about-logo-fallback {
+        min-height: 0;
+        height: 420px;
+    }
+
+    .about-visual > img,
+    .about-logo-fallback {
+        border-radius: 34px 18px 34px 34px;
+    }
+
+    .about-photo-note {
+        right: 8px;
+        bottom: -28px;
+        width: 230px;
+    }
+
+    .steps-section {
+        padding: 78px 0 88px;
+    }
+
+    .journey-list {
+        grid-template-columns: 1fr;
+        gap: 0;
+        margin-top: 42px;
+    }
+
+    .journey-list::before {
+        top: 25px;
+        bottom: 25px;
+        left: 30px;
+        width: 2px;
+        border-top: 0;
+        border-left: 2px dashed rgba(65, 40, 63, 0.25);
+    }
+
+    .journey-list li,
+    .journey-list li:nth-child(even) {
+        display: grid;
+        padding: 18px 0;
+        text-align: left;
+        grid-template-columns: 64px 42px 1fr;
+        gap: 12px;
+    }
+
+    .journey-number {
+        margin: 0;
+    }
+
+    .journey-list svg {
+        margin: 15px 0 0;
+    }
+
+    .journey-list li > div {
+        padding-top: 10px;
+    }
+
+    .organizers-layout {
+        gap: 40px;
+    }
+
+    .organizer-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .organizer-card:nth-child(2) {
+        transform: none;
+    }
+
+    .organizer-photo {
+        aspect-ratio: 0.92;
+    }
+
+    .organizer-note {
+        min-height: 0;
+    }
+
+    .instagram-layout {
+        grid-template-columns: 58px 1fr;
+        gap: 18px;
+    }
+
+    .instagram-mark {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+    }
+
+    .instagram-mark svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .instagram-section h2 {
+        font-size: 27px;
+    }
+
+    .instagram-button {
+        width: 100%;
+        grid-column: 1 / -1;
+    }
+
+    .contact-section {
+        padding: 76px 0;
+    }
+
+    .contact-layout {
+        gap: 38px;
+    }
+
+    .contact-person {
+        align-items: start;
+        grid-template-columns: 1fr;
+    }
+
+    .contact-person-links {
+        justify-content: flex-start;
+    }
+
+    .contact-socials {
+        display: grid;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-brand,
+    .footer-meta {
+        grid-column: 1 / -1;
+    }
+
+    .floating-contact {
+        display: block;
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .floating-contact-trigger {
+        width: 50px;
+        padding: 0;
+        justify-content: center;
+        font-size: 0;
+    }
+
+    .floating-contact-trigger svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .competitions-hero,
+    .faq-hero {
+        padding: 54px 0 64px;
+    }
+
+    .competitions-collage {
+        min-height: 290px;
+    }
+
+    .competitions-hero-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .segmented-control {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .segmented-control button {
+        padding-inline: 7px;
+        font-size: 11px;
+    }
+
+    .event-hero {
+        padding: 28px 0 64px;
+    }
+
+    .event-hero-layout {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .detail-poster {
+        max-width: 480px;
+        aspect-ratio: 0.83;
+    }
+
+    .event-topline {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .event-lead {
+        font-size: 17px;
+    }
+
+    .event-content {
+        padding: 76px 0 100px;
+    }
+
+    .facts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .event-section,
+    .rules-section,
+    .event-help {
+        padding-top: 54px;
+        margin-top: 54px;
+    }
+
+    .event-section h2,
+    .rules-section h2,
+    .apply-section h2,
+    .event-help h2 {
+        font-size: 29px;
+    }
+
+    .rules-section {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .apply-section {
+        padding: 28px 22px;
+        margin-top: 54px;
+    }
+
+    .event-help-people article {
+        grid-template-columns: 50px 1fr;
+    }
+
+    .help-links {
+        justify-content: flex-start;
+        grid-column: 2;
+    }
+
+    .detail-sticky-cta > span {
+        display: none;
+    }
+
+    .detail-sticky-cta .button {
+        width: 100%;
+    }
+
+    .faq-hero figure {
+        height: 240px;
+    }
+
+    .error-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .error-logo {
+        display: none;
+    }
+}
+
+@media (max-width: 430px) {
+    .container {
+        width: min(var(--container), calc(100% - 24px));
+    }
+
+    h1,
+    .competitions-hero-copy h1,
+    .event-hero-copy h1,
+    .faq-hero h1,
+    .error-layout h1 {
+        font-size: 35px;
+    }
+
+    h2 {
+        font-size: 28px;
+    }
+
+    .brand-logo {
+        max-width: 56px;
+        max-height: 52px;
+    }
+
+    .header-inner {
+        min-height: 68px;
+    }
+
+    .site-menu {
+        top: 75px;
+        right: 10px;
+        left: 10px;
+        padding: 20px;
+    }
+
+    .hero-visual {
+        padding-right: 24px;
+    }
+
+    .hero-photo-secondary {
+        width: 44%;
+    }
+
+    .hero-event-note {
+        width: 190px;
+    }
+
+    .gallery-item,
+    .gallery-item-1,
+    .gallery-item-2,
+    .gallery-item-3,
+    .gallery-item-4,
+    .gallery-item-5,
+    .gallery-item-6 {
+        width: 84vw;
+        height: 350px;
+    }
+
+    .journey-list li,
+    .journey-list li:nth-child(even) {
+        grid-template-columns: 64px 1fr;
+    }
+
+    .journey-list svg {
+        display: none;
+    }
+
+    .organizer-card-body {
+        padding: 20px;
+    }
+
+    .faq-answer {
+        padding-right: 20px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .footer-brand,
+    .footer-meta {
+        grid-column: auto;
+    }
+
+    .footer-meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .competition-filters {
+        padding: 16px;
+    }
+
+    .segmented-control {
+        grid-template-columns: 1fr;
+    }
+
+    .competitions-collage {
+        min-height: 230px;
+    }
+
+    .facts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .event-place-line {
+        flex-direction: column;
+    }
+
+    .floating-contact-panel {
+        position: fixed;
+        right: 12px;
+        bottom: 78px;
+        left: 12px;
+        width: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .js-enabled [data-reveal],
+    .js-enabled [data-reveal].is-revealed {
+        opacity: 1;
+        translate: none;
+        transition: none !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

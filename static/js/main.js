@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
             : null;
 
         const showImage = () => {
-            image.hidden = false;
             image.classList.add("is-loaded");
             if (placeholder) {
                 placeholder.hidden = true;
@@ -21,13 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const showPlaceholder = () => {
-            image.hidden = true;
             image.classList.remove("is-loaded");
             if (placeholder) {
                 placeholder.hidden = false;
             }
         };
 
+        image.removeAttribute("hidden");
         image.addEventListener("load", showImage, { once: true });
         image.addEventListener("error", showPlaceholder, { once: true });
 
@@ -40,14 +39,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    const setMenuState = (isOpen) => {
+    const setMenuState = (isOpen, returnFocus = false) => {
         if (!menu || !menuToggle) {
             return;
         }
+        const wasOpen = menu.classList.contains("is-open");
         menu.classList.toggle("is-open", isOpen);
         menuToggle.setAttribute("aria-expanded", String(isOpen));
         menuToggle.setAttribute("aria-label", isOpen ? "Закрыть меню" : "Открыть меню");
         document.body.classList.toggle("menu-open", isOpen);
+        if (!isOpen && wasOpen && returnFocus) {
+            menuToggle.focus();
+        }
     };
 
     if (menu && menuToggle) {
@@ -58,6 +61,14 @@ document.addEventListener("DOMContentLoaded", () => {
         navLinks.forEach((link) => {
             link.addEventListener("click", () => setMenuState(false));
         });
+
+        const desktopMenu = window.matchMedia("(min-width: 961px)");
+        const closeMenuOnDesktop = (event) => {
+            if (event.matches) {
+                setMenuState(false);
+            }
+        };
+        desktopMenu.addEventListener?.("change", closeMenuOnDesktop);
     }
 
     const headerPopover = document.querySelector("[data-contact-popover]");
@@ -121,6 +132,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.addEventListener("click", (event) => {
+        if (
+            menu
+            && menuToggle
+            && menu.classList.contains("is-open")
+            && !menu.contains(event.target)
+            && !menuToggle.contains(event.target)
+        ) {
+            setMenuState(false);
+        }
         if (headerPopover && !headerPopover.contains(event.target)) {
             setHeaderContacts(false);
         }
@@ -133,7 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key !== "Escape") {
             return;
         }
-        setMenuState(false);
+        if (menu?.classList.contains("is-open")) {
+            setMenuState(false, true);
+        }
         if (headerPanel && !headerPanel.hidden) {
             setHeaderContacts(false, true);
         }
@@ -173,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isVisible = matchesSearch && matchesStatus;
                 card.hidden = !isVisible;
                 if (isVisible) {
+                    card.classList.add("is-revealed");
                     visibleCount += 1;
                 }
             });
@@ -216,33 +239,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const primaryEventCta = document.querySelector(".event-actions .button.primary");
 
     if (stickyCta && primaryEventCta) {
-        const updateStickyCta = () => {
-            const buttonBottom = primaryEventCta.getBoundingClientRect().bottom;
-            const shouldShow = buttonBottom <= 0;
+        const setStickyCtaState = (shouldShow) => {
             stickyCta.classList.toggle("is-visible", shouldShow);
             document.body.classList.toggle("has-sticky-cta", shouldShow);
         };
 
+        const updateStickyCta = () => {
+            setStickyCtaState(
+                primaryEventCta.getBoundingClientRect().bottom <= 0
+            );
+        };
+        let stickyUpdateFrame = null;
+        const scheduleStickyCtaUpdate = () => {
+            if (stickyUpdateFrame !== null) {
+                return;
+            }
+            stickyUpdateFrame = window.requestAnimationFrame(() => {
+                stickyUpdateFrame = null;
+                updateStickyCta();
+            });
+        };
+
         updateStickyCta();
-        window.addEventListener("scroll", updateStickyCta, { passive: true });
+        window.addEventListener("scroll", scheduleStickyCtaUpdate, { passive: true });
         window.addEventListener("resize", updateStickyCta);
     }
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealItems = document.querySelectorAll(
-        ".competition-card, .gallery-item, .organizer-card"
-    );
+    const revealItems = Array.from(document.querySelectorAll("[data-reveal]"));
+    const reveal = (item) => item.classList.add("is-revealed");
 
-    if (!reducedMotion && "IntersectionObserver" in window) {
-        revealItems.forEach((item) => item.classList.add("reveal-item"));
-        const observer = new IntersectionObserver((entries) => {
+    if (reducedMotion || typeof window.IntersectionObserver !== "function") {
+        revealItems.forEach(reveal);
+    } else {
+        const heroRevealItems = revealItems.filter(
+            (item) => item.dataset.reveal === "hero"
+        );
+        const scrollRevealItems = revealItems.filter(
+            (item) => item.dataset.reveal !== "hero"
+        );
+        const revealObserver = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add("is-revealed");
-                    observer.unobserve(entry.target);
+                    reveal(entry.target);
+                    revealObserver.unobserve(entry.target);
                 }
             });
         }, { rootMargin: "0px 0px -8%", threshold: 0.08 });
-        revealItems.forEach((item) => observer.observe(item));
+
+        scrollRevealItems.forEach((item) => revealObserver.observe(item));
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => heroRevealItems.forEach(reveal));
+        });
     }
 });

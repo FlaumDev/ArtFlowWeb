@@ -26,7 +26,7 @@ def faq_row(**overrides):
 
 
 def set_repository_rows(monkeypatch, rows):
-    async def get_all_faq():
+    async def get_all_faq(*, pool=None):
         return rows
 
     monkeypatch.setattr(faq_service.faq_repository, "get_all_faq", get_all_faq)
@@ -87,7 +87,7 @@ def test_empty_faq_list_stays_empty(monkeypatch):
 
 def test_faq_database_error_does_not_reveal_secret(monkeypatch):
     @asynccontextmanager
-    async def unavailable_connection():
+    async def unavailable_connection(_pool):
         raise DatabaseUnavailableError(
             "postgresql://public_user:very-secret-password@example.invalid/db"
         )
@@ -96,7 +96,7 @@ def test_faq_database_error_does_not_reveal_secret(monkeypatch):
     monkeypatch.setattr(faq_repository, "get_connection", unavailable_connection)
 
     with pytest.raises(DatabaseUnavailableError) as error:
-        asyncio.run(faq_repository.get_all_faq())
+        asyncio.run(faq_repository.get_all_faq(pool=None))
 
     assert str(error.value) == "Database is unavailable"
     assert "secret" not in str(error.value).lower()
@@ -118,7 +118,7 @@ def test_faq_template_uses_native_accordion_and_escaped_output():
         encoding="utf-8"
     )
 
-    assert "<details>" in component
+    assert "<details" in component
     assert "<summary>" in component
     assert "| safe" not in component
     assert "|safe" not in component

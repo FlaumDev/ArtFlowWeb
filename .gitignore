@@ -8,6 +8,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
+.coverage
+htmlcov/
 .mypy_cache/
 .ruff_cache/
 
@@ -15,6 +17,7 @@ __pycache__/
 .venv/
 venv/
 env/
+dist/
 
 # IDEs and editors
 .idea/

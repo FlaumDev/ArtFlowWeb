@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -81,15 +82,23 @@ def _is_placeholder(value: str) -> bool:
 
 def _web_url(value: Any) -> str:
     url = _text(value)
-    if _is_placeholder(url) or any(ord(character) < 32 for character in url):
+    if _is_placeholder(url) or any(
+        unicodedata.category(character) == "Cc" for character in url
+    ):
         return ""
 
     try:
         parsed = urlsplit(url)
+        parsed.port
     except ValueError:
         return ""
 
-    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+    if (
+        parsed.scheme.lower() not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
         return ""
     return url
 
@@ -127,9 +136,13 @@ def _platform_url(
 
 def _email(value: Any) -> str:
     email = _text(value)
+    encoded_controls = {"%0a", "%0d"}
     if (
         _is_placeholder(email)
         or " " in email
+        or "?" in email
+        or "#" in email
+        or any(marker in email.casefold() for marker in encoded_controls)
         or email.count("@") != 1
         or any(ord(character) < 32 or ord(character) == 127 for character in email)
     ):

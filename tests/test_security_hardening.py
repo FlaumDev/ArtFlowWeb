@@ -10,6 +10,7 @@ from fastapi import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import main
+from app.cache import ApplicationCaches
 from app.config import settings
 from app.database import DatabaseUnavailableError
 from app.repositories import competitions as competitions_repository
@@ -171,17 +172,32 @@ def test_csp_rejects_unsafe_inline():
     assert "unsafe-inline" not in headers["content-security-policy"]
 
 
+def test_public_csp_does_not_allow_data_urls():
+    _, headers, _ = asgi_get(main.create_app(make_settings()), "/health")
+    assert "data:" not in headers["content-security-policy"]
+
+
 def test_nosniff_header():
     _, headers, _ = asgi_get(main.create_app(make_settings()), "/health")
     assert headers["x-content-type-options"] == "nosniff"
 
 
+def test_application_response_has_request_id():
+    _, headers, _ = asgi_get(main.create_app(make_settings()), "/health")
+    assert re.fullmatch(r"[0-9a-f]{32}", headers["x-request-id"])
+
+
 @pytest.mark.parametrize(
-    ("path", "content_type"),
-    [
-        ("/static/css/style.css", "text/css"),
-        ("/static/js/main.js", "text/javascript"),
-    ],
+        ("path", "content_type"),
+        [
+            ("/static/css/base.css", "text/css"),
+            ("/static/css/components.css", "text/css"),
+            ("/static/css/pages.css", "text/css"),
+            ("/static/css/responsive.css", "text/css"),
+            ("/static/js/main.js", "text/javascript"),
+            ("/static/images/artflow-logo.png", "image/png"),
+            ("/static/images/artflow-logo-512.png", "image/png"),
+        ],
 )
 def test_static_assets_receive_nosniff(path, content_type):
     status, headers, _ = asgi_get(main.create_app(make_settings()), path)
@@ -244,8 +260,34 @@ def test_hsts_only_for_production_https():
     assert "strict-transport-security" not in malformed_headers
 
 
+@pytest.mark.parametrize(
+    "invalid_base_url",
+    [
+        "https://example.test\n.evil.test",
+        "https://exam ple.test",
+        "https://user:password@example.test",
+        "https://10.0.0.5",
+    ],
+)
+def test_invalid_production_origin_does_not_enable_hsts(invalid_base_url):
+    app_settings = replace(
+        make_settings(production=True, https=True),
+        base_url=invalid_base_url,
+    )
+    assert app_settings.public_https_base_url is None
+
+
+def test_robots_txt_is_public_and_non_sensitive():
+    status, headers, body = asgi_get(main.create_app(make_settings()), "/robots.txt")
+    assert status == 200
+    assert headers["content-type"].startswith("text/plain")
+    assert headers["x-content-type-options"] == "nosniff"
+    assert b"User-agent: *" in body
+    assert b"Disallow: /openapi.json" in body
+
+
 def test_jinja_escapes_script(monkeypatch):
-    async def faq_items():
+    async def faq_items(database_pool=None, cache=None):
         return [{"id": 1, "question": "<script>alert(1)</script>", "answer": "ok"}]
 
     monkeypatch.setattr(faq_routes, "get_faq_items", faq_items)
@@ -291,8 +333,48 @@ def test_foreign_instagram_host_is_rejected(tmp_path):
     assert content["contacts"]["instagram"]["url"] == ""
 
 
+@pytest.mark.parametrize(
+    "telegram_url",
+    [
+        "javascript:alert(1)",
+        "data:text/html,unsafe",
+        "https://user:password@t.me/organizer",
+        "https://t.me:not-a-port/organizer",
+        "https://t.me/organizer\x7f",
+    ],
+)
+def test_unsafe_social_urls_are_rejected(tmp_path, telegram_url):
+    content = load_site_content(
+        write_content(
+            tmp_path,
+            {
+                "contacts": {
+                    "organizers": [
+                        {"name": "A", "telegram_url": telegram_url}
+                    ]
+                }
+            },
+        )
+    )
+    assert content["contacts"]["organizers"][0]["telegram_url"] == ""
+
+
 def test_email_with_crlf_is_rejected(tmp_path):
     content = load_site_content(write_content(tmp_path, {"contacts": {"email": "hello@example.test\r\nBcc:evil@example.test"}}))
+    assert content["contacts"]["email"] == ""
+
+
+@pytest.mark.parametrize(
+    "email",
+    [
+        "hello%0d%0aBcc:evil@example.test",
+        "hello@example.test?subject=unsafe",
+    ],
+)
+def test_email_with_injected_mailto_fields_is_rejected(tmp_path, email):
+    content = load_site_content(
+        write_content(tmp_path, {"contacts": {"email": email}})
+    )
     assert content["contacts"]["email"] == ""
 
 
@@ -318,16 +400,17 @@ def test_repositories_contain_select_only():
 def test_cache_returns_data_within_ttl(monkeypatch):
     calls = 0
 
-    async def rows(limit=None):
+    async def rows(limit=None, *, pool=None):
         nonlocal calls
         calls += 1
         return []
 
     monkeypatch.setattr(competitions_repository, "get_published_competitions", rows)
+    cache = ApplicationCaches().competitions
 
     async def load_twice():
-        await competitions_service.get_competitions()
-        await competitions_service.get_competitions()
+        await competitions_service.get_competitions(cache=cache)
+        await competitions_service.get_competitions(cache=cache)
 
     asyncio.run(load_twice())
     assert calls == 1
@@ -336,7 +419,7 @@ def test_cache_returns_data_within_ttl(monkeypatch):
 def test_database_error_is_not_cached_forever(monkeypatch):
     calls = 0
 
-    async def rows(limit=None):
+    async def rows(limit=None, *, pool=None):
         nonlocal calls
         calls += 1
         if calls == 1:
@@ -344,22 +427,23 @@ def test_database_error_is_not_cached_forever(monkeypatch):
         return []
 
     monkeypatch.setattr(competitions_repository, "get_published_competitions", rows)
+    cache = ApplicationCaches().competitions
 
     async def load_twice():
         with pytest.raises(DatabaseUnavailableError):
-            await competitions_service.get_competitions()
-        return await competitions_service.get_competitions()
+            await competitions_service.get_competitions(cache=cache)
+        return await competitions_service.get_competitions(cache=cache)
 
     assert asyncio.run(load_twice()) == []
     assert calls == 2
 
 
 def test_health_db_does_not_reveal_secrets(monkeypatch):
-    async def unavailable():
+    async def unavailable(_pool):
         raise DatabaseUnavailableError("postgres://user:SECRET@host/database")
 
     monkeypatch.setattr(main, "check_database_connection", unavailable)
-    response = asyncio.run(main.health_db())
+    response = asyncio.run(main.health_db(request_for("/health/db")))
     assert response.status_code == 503
     assert b"SECRET" not in response.body
     assert b"postgres" not in response.body
@@ -393,10 +477,15 @@ def test_organizer_webp_are_available_to_templates():
 
 
 def test_home_has_one_final_contact_section(monkeypatch):
-    async def no_competitions(limit=3, app_settings=None):
+    async def no_competitions(
+        limit=3,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         return []
 
-    async def no_faq():
+    async def no_faq(database_pool=None, cache=None):
         return []
 
     monkeypatch.setattr(main, "get_featured_competitions", no_competitions)
@@ -406,7 +495,12 @@ def test_home_has_one_final_contact_section(monkeypatch):
 
 
 def test_detail_does_not_render_all_contact_blocks(monkeypatch):
-    async def competition(_competition_id, app_settings=None):
+    async def competition(
+        _competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         return sample_competition()
 
     monkeypatch.setattr(competition_routes, "get_competition_by_id", competition)
@@ -415,7 +509,12 @@ def test_detail_does_not_render_all_contact_blocks(monkeypatch):
     assert 'class="contact-section"' not in body
     assert 'class="floating-contact"' not in body
 
-    async def closed_competition(_competition_id, app_settings=None):
+    async def closed_competition(
+        _competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         item = sample_competition()
         item["registration_is_open"] = False
         return item
@@ -437,7 +536,12 @@ def test_detail_does_not_render_all_contact_blocks(monkeypatch):
 def test_404_and_503_do_not_render_floating_contact(monkeypatch):
     not_found = asyncio.run(main.not_found(request_for("/missing"), StarletteHTTPException(404)))
 
-    async def unavailable(_competition_id, app_settings=None):
+    async def unavailable(
+        _competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
         raise DatabaseUnavailableError("offline")
 
     monkeypatch.setattr(competition_routes, "get_competition_by_id", unavailable)

@@ -1,0 +1,18 @@
+name: artflowweb-integration
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: artflow_test
+      POSTGRES_USER: artflow_test
+      POSTGRES_PASSWORD: integration-only-password
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artflow_test -d artflow_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./tests/integration/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro

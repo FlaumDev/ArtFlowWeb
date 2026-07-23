@@ -22,7 +22,7 @@
 - psycopg 3 (`psycopg[binary,pool]`);
 - python-dotenv.
 
-ORM, SQLAlchemy и Alembic не используются. PostgreSQL-соединения обслуживает небольшой асинхронный пул уровня процесса.
+ORM, SQLAlchemy и Alembic не используются. Каждый экземпляр FastAPI владеет своим небольшим асинхронным пулом и runtime-cache через `app.state`.
 
 ## Маршруты
 
@@ -34,6 +34,8 @@ ORM, SQLAlchemy и Alembic не используются. PostgreSQL-соеди�
 | `/faq` | Все частые вопросы из PostgreSQL |
 | `/health` | Проверка FastAPI без обращения к БД |
 | `/health/db` | Проверка PostgreSQL через `SELECT 1` |
+| `/robots.txt` | Правила индексации и ссылка на sitemap для public HTTPS origin |
+| `/sitemap.xml` | Публичные страницы и опубликованные конкурсы |
 
 ## Локальный запуск
 
@@ -64,21 +66,53 @@ py -m pip install -r requirements.lock
 Установить зависимости для разработки:
 
 ```powershell
-py -m pip install -r requirements-dev.txt
+py -m pip install -r requirements-dev.lock
 ```
 
-Запустить тесты:
+Запустить unit-тесты без Docker:
 
 ```powershell
-py -m pytest
+python -m pytest -q
+```
+
+Измерить покрытие только unit-тестами и применить RC-порог 85%:
+
+```powershell
+python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=85
+```
+
+Запустить integration-тесты с изолированной PostgreSQL из Docker Compose:
+
+```powershell
+python -m pytest -m integration
+```
+
+Установить Chromium и запустить изолированные browser-тесты на mock-данных:
+
+```powershell
+py -m pip install -r requirements-e2e.lock
+py -m playwright install chromium
+python -m pytest -m e2e
 ```
 
 Проверить код и зависимости:
 
 ```powershell
-py -m bandit -r app
-py -m pip_audit -r requirements.lock
+python -m bandit -r app
+python -m pip check
+python -m pip_audit -r requirements.lock
 ```
+
+Проверить production-конфигурацию без подключения к БД и затем публичный deployment:
+
+```powershell
+python -m scripts.check_production_settings
+python -m scripts.verify_production https://REAL_DOMAIN --competition-id PUBLISHED_OPEN_ID
+```
+
+CI на `push` и `pull_request` отдельно запускает unit/security, Gitleaks по
+Git-истории, PostgreSQL integration и browser E2E. Workflow не выполняет deploy и не
+использует production secrets.
 
 Для обновления lock создают чистое виртуальное окружение, устанавливают в него
 только `requirements.txt`, выполняют тесты, а затем фиксируют реально
@@ -92,12 +126,28 @@ Lock не обновляется догадками и `pip-audit --fix` не з
 Если Windows-путь содержит кириллицу и `pip-api` сообщает об ошибке декодирования,
 перед аудитом можно установить `$env:PYTHONUTF8 = "1"`.
 
+`requirements.lock`, `requirements-dev.lock` и `requirements-e2e.lock` содержат
+фактически установленные и проверенные версии. Файлы `requirements*.txt` остаются
+входными списками для осознанного обновления; CI и повторяемые локальные проверки
+устанавливают соответствующий lock-файл.
+
+Создать проверенный release ZIP без `.env`, `.git`, локального окружения, кэшей,
+логов и тестовых артефактов:
+
+```powershell
+python -m scripts.create_release_archive
+```
+
+Архив создаётся в `dist/ArtFlowWeb-release.zip`, сохраняет `.env.example`, после
+записи повторно проверяет запрещённые пути и выводит итоговый путь и размер.
+
 ## Переменные окружения
 
 - `DATABASE_URL` - полный DSN PostgreSQL; используется в приоритете.
 - `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` - отдельные параметры подключения, если `DATABASE_URL` не задан.
 - `BOT_USERNAME` - имя Telegram-бота с ведущим `@` или без него.
-- `APP_ENV` - `development` или `production`.
+- `APP_ENV` - `development`, `test` или `production`.
+- `APP_TIMEZONE` - IANA timezone для бизнес-даты дедлайна; по умолчанию `Asia/Almaty`.
 - `BASE_URL` - публичный адрес; canonical и HSTS требуют HTTPS production URL.
 - `ALLOWED_HOSTS` - разрешённые Host через запятую. В production указываются реальный домен и Railway-домен.
 - `ENABLE_DOCS` - включает `/docs`, `/redoc` и `/openapi.json`; в production по умолчанию выключено.
@@ -109,7 +159,11 @@ Lock не обновляется догадками и `pip-audit --fix` не з
 
 ArtFlowWeb выполняет только `SELECT`: читает опубликованные записи таблицы `competitions` и записи таблицы `faq`. Сайт не запускает миграции, не изменяет схему и не обращается к таблицам заявок, участников, пользователей или администраторов.
 
-Repository и `/health/db` получают соединения из одного `AsyncConnectionPool` с ограниченным временем ожидания.
+Repository и `/health/db` получают явно переданный `AsyncConnectionPool` текущего экземпляра FastAPI с ограниченным временем ожидания. Pool создаётся и закрывается lifespan приложения; глобального изменяемого pool нет.
+
+Статус регистрации вычисляется по календарной дате `APP_TIMEZONE`, а не по локальному времени сервера. Значения PostgreSQL `DATE` при этом не преобразуются и не изменяются.
+
+Каждый HTTP-ответ получает `X-Request-ID`. Application access-log содержит только route template, status code и duration; `/health` и `/health/db` не записываются этим middleware. В development формат читаемый, в production — JSON.
 
 Поток данных:
 
@@ -138,6 +192,9 @@ ArtFlowWeb формирует ссылку, а ArtFlowBot обрабатывае
 - [Требования к контенту](docs/content_requirements.md)
 - [Контракт Telegram deep link](docs/telegram_deep_link_contract.md)
 - [Безопасность и production](docs/security.md)
+- [Deployment backend](docs/deployment.md)
+- [Тестирование](docs/testing.md)
+- [Бюджеты производительности](docs/performance.md)
 
 ## Безопасность
 

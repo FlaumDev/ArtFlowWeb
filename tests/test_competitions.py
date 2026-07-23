@@ -1,6 +1,6 @@
 import asyncio
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -24,7 +24,7 @@ def competition_row(**overrides):
         "place": "Площадка",
         "price": "2500 рублей",
         "event_date": date(2026, 9, 5),
-        "application_deadline": date.today(),
+        "application_deadline": date(2026, 9, 1),
         "city": "Москва",
         "short_description": "Краткое описание",
         "directions": "Вокал, Хореография",
@@ -129,9 +129,15 @@ def test_poster_templates_and_browser_fallback_contract():
     assert "poster-frame" in card and "poster-frame" in detail
     assert "data-poster-image" in card and "data-poster-placeholder" in card
     assert "data-poster-image" in detail and "data-poster-placeholder" in detail
+    poster_tags = [
+        re.search(r"<img[^>]+data-poster-image[^>]*>", template, re.DOTALL).group(0)
+        for template in (card, detail)
+    ]
+    assert all("hidden" not in poster_tag for poster_tag in poster_tags)
     assert 'addEventListener("load"' in javascript
     assert 'addEventListener("error"' in javascript
-    assert "image.hidden = true" in javascript
+    assert 'image.removeAttribute("hidden")' in javascript
+    assert "image.hidden" not in javascript
     assert "placeholder.hidden = false" in javascript
 
 
@@ -222,15 +228,19 @@ def test_competition_fields_are_not_moved_between_contract_fields():
 
 
 def test_registration_deadline_is_inclusive():
-    today = date.today()
+    fixed_now = datetime(2026, 9, 1, 12, tzinfo=timezone.utc)
+    deadline = date(2026, 9, 1)
     open_result = competitions_service._serialize_competition(
-        competition_row(application_deadline=today)
+        competition_row(application_deadline=deadline),
+        now=fixed_now,
     )
     closed_result = competitions_service._serialize_competition(
-        competition_row(application_deadline=today - timedelta(days=1))
+        competition_row(application_deadline=date(2026, 8, 31)),
+        now=fixed_now,
     )
     missing_result = competitions_service._serialize_competition(
-        competition_row(application_deadline=None)
+        competition_row(application_deadline=None),
+        now=fixed_now,
     )
 
     assert open_result["registration_is_open"] is True
@@ -239,7 +249,7 @@ def test_registration_deadline_is_inclusive():
 
 
 def test_negative_competition_id_skips_database(monkeypatch):
-    def fail_if_called():
+    def fail_if_called(_pool):
         raise AssertionError("Database must not be queried for a negative ID")
 
     monkeypatch.setattr(
@@ -248,7 +258,10 @@ def test_negative_competition_id_skips_database(monkeypatch):
         fail_if_called,
     )
     result = asyncio.run(
-        competitions_repository.get_published_competition_by_id(-1)
+        competitions_repository.get_published_competition_by_id(
+            -1,
+            pool=None,
+        )
     )
     assert result is None
 
@@ -284,10 +297,8 @@ def test_pool_has_small_bounded_configuration():
 
 
 def test_missing_pool_returns_controlled_error(monkeypatch):
-    monkeypatch.setattr(database, "_pool", None)
-
     async def acquire():
-        async with database.get_connection():
+        async with database.get_connection(None):
             raise AssertionError("No connection should be yielded")
 
     with pytest.raises(database.DatabaseUnavailableError):

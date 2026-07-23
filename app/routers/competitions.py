@@ -8,7 +8,12 @@ from app.services.competitions import (
     get_competitions,
 )
 from app.site_content import get_site_content
-from app.web import page_context, request_settings
+from app.web import (
+    page_context,
+    request_caches,
+    request_database_pool,
+    request_settings,
+)
 
 
 router = APIRouter()
@@ -16,14 +21,18 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/competitions", response_class=HTMLResponse)
-async def competitions(request: Request):
+async def competitions(request: Request) -> HTMLResponse:
     load_error = False
     status_code = 200
     active_settings = request_settings(request)
+    database_pool = request_database_pool(request)
+    caches = request_caches(request)
 
     try:
         competition_items = await get_competitions(
-            app_settings=active_settings
+            app_settings=active_settings,
+            database_pool=database_pool,
+            cache=caches.competitions,
         )
     except DatabaseUnavailableError:
         competition_items = []
@@ -58,12 +67,19 @@ async def competitions(request: Request):
 
 
 @router.get("/competitions/{competition_id}", response_class=HTMLResponse)
-async def competition_detail(request: Request, competition_id: int):
+async def competition_detail(
+    request: Request,
+    competition_id: int,
+) -> HTMLResponse:
     active_settings = request_settings(request)
+    database_pool = request_database_pool(request)
+    caches = request_caches(request)
     try:
         competition = await get_competition_by_id(
             competition_id,
             app_settings=active_settings,
+            database_pool=database_pool,
+            cache=caches.competition_details,
         )
     except DatabaseUnavailableError:
         site_content = get_site_content()

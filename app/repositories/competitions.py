@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.database import get_connection
+from app.database import DatabasePool, get_connection
 
 
 CompetitionRow = dict[str, Any]
@@ -73,6 +73,8 @@ _PUBLISHED_COMPETITION_BY_ID_SQL = """
 
 async def get_published_competitions(
     limit: int | None = None,
+    *,
+    pool: DatabasePool | None,
 ) -> list[CompetitionRow]:
     if limit is not None and limit <= 0:
         return []
@@ -84,7 +86,7 @@ async def get_published_competitions(
         query = _PUBLISHED_COMPETITIONS_WITH_LIMIT_SQL
         params = (limit,)
 
-    async with get_connection() as connection:
+    async with get_connection(pool) as connection:
         async with connection.cursor() as cursor:
             await cursor.execute(query, params)
             rows = await cursor.fetchall()
@@ -94,11 +96,13 @@ async def get_published_competitions(
 
 async def get_published_competition_by_id(
     competition_id: int,
+    *,
+    pool: DatabasePool | None,
 ) -> CompetitionRow | None:
     if competition_id <= 0:
         return None
 
-    async with get_connection() as connection:
+    async with get_connection(pool) as connection:
         async with connection.cursor() as cursor:
             await cursor.execute(
                 _PUBLISHED_COMPETITION_BY_ID_SQL,
