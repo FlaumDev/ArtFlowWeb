@@ -29,6 +29,8 @@ _FULL_SECURITY_HEADERS = (
     "x-frame-options",
     "permissions-policy",
 )
+_MINIMUM_HSTS_MAX_AGE = 31_536_000
+_HSTS_FLAG_DIRECTIVES = {"includesubdomains", "preload"}
 _MAX_RESPONSE_BYTES = 2_000_000
 
 
@@ -141,6 +143,45 @@ class ProductionFetcher:
         return HttpResponse(response.status, headers, _safe_read(response))
 
 
+def hsts_header_error(value: str | None) -> str | None:
+    actual_value = "" if value is None else value
+
+    def invalid(reason: str) -> str:
+        return f"Invalid HSTS header {actual_value!r}: {reason}"
+
+    if not actual_value.strip():
+        return invalid("header is missing")
+
+    max_age_values: list[str | None] = []
+    for directive in actual_value.split(";"):
+        directive = directive.strip()
+        if not directive:
+            continue
+
+        name, separator, raw_value = directive.partition("=")
+        normalized_name = name.strip().casefold()
+        if normalized_name == "max-age":
+            max_age_values.append(raw_value.strip() if separator else None)
+            continue
+        if normalized_name in _HSTS_FLAG_DIRECTIVES:
+            if separator:
+                return invalid(f"{name.strip()} must not have a value")
+            continue
+        return invalid(f"unsupported directive {name.strip()!r}")
+
+    if not max_age_values:
+        return invalid("max-age is missing")
+    if len(max_age_values) != 1:
+        return invalid("exactly one max-age directive is required")
+
+    max_age_value = max_age_values[0]
+    if max_age_value is None or re.fullmatch(r"[0-9]+", max_age_value) is None:
+        return invalid("max-age must be an integer")
+    if int(max_age_value) < _MINIMUM_HSTS_MAX_AGE:
+        return invalid(f"max-age must be at least {_MINIMUM_HSTS_MAX_AGE}")
+    return None
+
+
 def security_header_errors(response: HttpResponse) -> list[str]:
     errors: list[str] = []
     if response.headers.get("x-content-type-options", "").casefold() != "nosniff":
@@ -152,9 +193,11 @@ def security_header_errors(response: HttpResponse) -> list[str]:
     csp = response.headers.get("content-security-policy", "")
     if "unsafe-inline" in csp or "unsafe-eval" in csp:
         errors.append("Public CSP contains an unsafe source")
-    hsts = response.headers.get("strict-transport-security", "")
-    if hsts.casefold() != "max-age=31536000":
-        errors.append("HSTS must be exactly max-age=31536000")
+    hsts_error = hsts_header_error(
+        response.headers.get("strict-transport-security")
+    )
+    if hsts_error:
+        errors.append(hsts_error)
     return errors
 
 

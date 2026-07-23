@@ -292,9 +292,10 @@ async def server_error(request: Request, _exc: Exception) -> HTMLResponse:
 def create_app(app_settings: Settings | None = None) -> FastAPI:
     active_settings = app_settings or settings
     disable_duplicate_uvicorn_access_log()
-    docs_url = "/docs" if active_settings.enable_docs else None
-    openapi_url = "/openapi.json" if active_settings.enable_docs else None
-    redoc_url = "/redoc" if active_settings.enable_docs else None
+    docs_enabled = active_settings.enable_docs and not active_settings.is_production
+    docs_url = "/docs" if docs_enabled else None
+    openapi_url = "/openapi.json" if docs_enabled else None
+    redoc_url = "/redoc" if docs_enabled else None
 
     application = FastAPI(
         title="ArtFlowWeb",
@@ -332,7 +333,7 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
                     "/docs": DOCS_CONTENT_SECURITY_POLICY,
                     "/redoc": DOCS_CONTENT_SECURITY_POLICY,
                 }
-                if active_settings.enable_docs
+                if docs_enabled
                 else None
             ),
         )

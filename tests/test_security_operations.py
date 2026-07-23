@@ -12,6 +12,7 @@ from scripts.verify_production import (
     VerificationError,
     _deep_link_ids,
     audit_html,
+    hsts_header_error,
     security_header_errors,
     validate_public_base_url,
 )
@@ -51,6 +52,19 @@ def test_production_settings_fail_closed_without_safe_hosts_and_headers():
     assert "ALLOWED_HOSTS" in rendered
     assert "ENABLE_DOCS" in rendered
     assert "ENABLE_SECURITY_HEADERS" in rendered
+
+
+def test_production_settings_require_production_env_and_https_base_url():
+    errors = validate_production_settings(
+        production_settings(
+            app_env="development",
+            base_url="http://artflow.example.test",
+        )
+    )
+    rendered = " ".join(errors)
+
+    assert "APP_ENV" in rendered
+    assert "BASE_URL" in rendered
 
 
 @pytest.mark.parametrize(
@@ -118,6 +132,44 @@ def test_production_header_audit_requires_strict_public_policy():
         body=b"{}",
     )
     assert security_header_errors(response) == []
+
+
+@pytest.mark.parametrize(
+    "header_value",
+    [
+        "max-age=31536000",
+        "max-age=31536000; includeSubDomains",
+        "Max-Age=63072000; includeSubDomains; preload",
+        "  max-age = 31536000 ; includeSubDomains  ",
+    ],
+)
+def test_hsts_parser_accepts_safe_directives(header_value):
+    assert hsts_header_error(header_value) is None
+
+
+@pytest.mark.parametrize(
+    ("header_value", "expected_reason"),
+    [
+        (None, "header is missing"),
+        ("includeSubDomains", "max-age is missing"),
+        ("max-age=0", "max-age must be at least 31536000"),
+        ("max-age=not-a-number", "max-age must be an integer"),
+        (
+            "max-age=31536000; max-age=63072000",
+            "exactly one max-age directive is required",
+        ),
+        (
+            "max-age=31536000; MAX-AGE=31536000",
+            "exactly one max-age directive is required",
+        ),
+    ],
+)
+def test_hsts_parser_rejects_unsafe_values(header_value, expected_reason):
+    error = hsts_header_error(header_value)
+
+    assert error is not None
+    assert expected_reason in error
+    assert repr("" if header_value is None else header_value) in error
 
 
 def test_ci_covers_required_security_checks_and_is_not_a_deploy_workflow():

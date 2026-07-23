@@ -61,6 +61,17 @@ py -m uvicorn app.main:app --reload
 py -m pip install -r requirements.lock
 ```
 
+Рекомендуемый Railway Start Command сначала проверяет fail-closed production
+settings и запускает сервер только при успешной проверке:
+
+```text
+python -m scripts.check_production_settings && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+```
+
+Даже если `ENABLE_DOCS=true` задан ошибочно, production-приложение не создаёт
+маршруты `/docs`, `/redoc` и `/openapi.json`. Проверка настроек всё равно требует
+явного `ENABLE_DOCS=false` и завершает Start Command с ошибкой при нарушении.
+
 ## Тесты
 
 Установить зависимости для разработки:

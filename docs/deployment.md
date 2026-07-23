@@ -60,7 +60,20 @@ Development:
 py -m uvicorn app.main:app --reload
 ```
 
-Production-команда задаётся платформой с одним или несколькими worker-процессами. Каждый worker создаёт собственные pool и TTL-cache; общий Redis для текущего публичного read-only сайта не требуется.
+Рекомендуемый Railway Start Command:
+
+```text
+python -m scripts.check_production_settings && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+```
+
+Первая команда требует `APP_ENV=production`, `ENABLE_DOCS=false`,
+`ENABLE_SECURITY_HEADERS=true`, public HTTPS `BASE_URL` и корректный
+`ALLOWED_HOSTS`. Uvicorn запускается только после успешной проверки. Дополнительно
+само production-приложение никогда не создаёт маршруты docs, даже если
+`ENABLE_DOCS=true` попал в окружение по ошибке.
+
+Каждый worker создаёт собственные pool и TTL-cache; общий Redis для текущего
+публичного read-only сайта не требуется.
 
 Локальный release archive создаётся перед передачей владельцу deployment:
 

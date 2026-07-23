@@ -128,24 +128,25 @@ def write_content(tmp_path, content):
     return path
 
 
-def test_production_disables_docs():
-    assert asgi_get(main.create_app(make_settings(production=True)), "/docs")[0] == 404
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_production_disables_docs_when_setting_is_false(path):
+    application = main.create_app(make_settings(production=True, docs=False))
+    assert asgi_get(application, path)[0] == 404
 
 
-def test_production_disables_redoc():
-    assert asgi_get(main.create_app(make_settings(production=True)), "/redoc")[0] == 404
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_production_docs_fail_closed_when_setting_is_true(path):
+    application = main.create_app(make_settings(production=True, docs=True))
+    assert asgi_get(application, path)[0] == 404
 
 
-def test_production_disables_openapi():
-    app = main.create_app(make_settings(production=True))
-    assert asgi_get(app, "/openapi.json")[0] == 404
-
-
-def test_development_keeps_docs():
-    status, headers, _ = asgi_get(main.create_app(make_settings()), "/docs")
+def test_development_keeps_docs_when_setting_is_true():
+    application = main.create_app(make_settings(production=False, docs=True))
+    status, headers, _ = asgi_get(application, "/docs")
     assert status == 200
     assert "content-security-policy" in headers
     assert "https://cdn.jsdelivr.net" in headers["content-security-policy"]
+    assert asgi_get(application, "/openapi.json")[0] == 200
 
 
 def test_allowed_host_passes():
