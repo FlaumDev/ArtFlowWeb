@@ -39,6 +39,7 @@ from app.security import (
     SECURITY_HEADERS,
     SecurityHeadersMiddleware,
 )
+from app.seo import website_structured_data
 from app.services.competitions import get_competitions, get_featured_competitions
 from app.services.faq import get_faq_items
 from app.site_content import get_site_content
@@ -126,15 +127,25 @@ async def index(request: Request) -> HTMLResponse:
     site_content = get_site_content()
     context = page_context(
         request,
-        title="ArtFlow - творческие конкурсы для детей и подростков",
+        title="ArtFlow — конкурсы и фестивали для юных талантов",
         description=(
-            "Творческие события ArtFlow: сценический опыт, поддержка "
-            "организаторов и актуальные конкурсы для юных артистов."
+            "Творческие конкурсы и фестивали ArtFlow для детей и подростков: "
+            "актуальное расписание, условия участия и переход к заявке."
         ),
         site_content=site_content,
         active_page="home",
         show_contact_section=True,
         show_floating_contact=True,
+        indexable=status_code == 200,
+    )
+    context["structured_data"] = (
+        website_structured_data(
+            base_url=active_settings.public_https_base_url,
+            description=context["seo_description"],
+            site_content=site_content,
+        )
+        if status_code == 200
+        else []
     )
     context.update(
         {
@@ -153,8 +164,11 @@ async def index(request: Request) -> HTMLResponse:
 
 
 @core_router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> JSONResponse:
+    return JSONResponse(
+        content={"status": "ok"},
+        headers={"X-Robots-Tag": "noindex, nofollow"},
+    )
 
 
 @core_router.get("/robots.txt", response_class=PlainTextResponse)
@@ -201,11 +215,17 @@ async def sitemap(request: Request) -> Response:
             )
         except DatabaseUnavailableError:
             competitions = []
-        competition_ids = [
-            competition["id"]
-            for competition in competitions
-            if type(competition.get("id")) is int and competition["id"] > 0
-        ]
+        competition_ids = list(
+            dict.fromkeys(
+                competition["id"]
+                for competition in competitions
+                if (
+                    type(competition.get("id")) is int
+                    and competition["id"] > 0
+                    and competition.get("is_published") is not False
+                )
+            )
+        )
 
     return Response(
         content=_sitemap_document(public_base_url, competition_ids),
@@ -230,8 +250,12 @@ async def health_db(request: Request) -> JSONResponse:
         return JSONResponse(
             status_code=503,
             content={"status": "unavailable"},
+            headers={"X-Robots-Tag": "noindex, nofollow"},
         )
-    return JSONResponse(content={"status": "ok"})
+    return JSONResponse(
+        content={"status": "ok"},
+        headers={"X-Robots-Tag": "noindex, nofollow"},
+    )
 
 
 def clear_application_caches(application: FastAPI) -> None:
@@ -254,6 +278,7 @@ async def not_found(
                 "Вернитесь к актуальному расписанию конкурсов."
             ),
             site_content=site_content,
+            indexable=False,
         ),
         status_code=404,
     )
@@ -272,6 +297,7 @@ async def server_error(request: Request, _exc: Exception) -> HTMLResponse:
                 "Перейдите на главную или к списку конкурсов."
             ),
             site_content=site_content,
+            indexable=False,
         ),
         status_code=500,
     )

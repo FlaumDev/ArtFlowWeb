@@ -79,6 +79,20 @@ python -m pip check
 python -m pip_audit -r requirements.lock
 ```
 
+## SEO
+
+Технический SEO-набор не использует сеть или production PostgreSQL:
+
+```powershell
+python -m pytest -q tests/test_seo.py
+```
+
+Он проверяет title/description, canonical и social metadata всех публичных страниц,
+`noindex` для ошибок и healthcheck, безопасный JSON-LD, фактический `Event`,
+`BreadcrumbList`, `robots.txt`, sitemap и соответствие каждого sitemap URL
+каноническому URL страницы. Тестовый production origin равен
+`https://artflowfest.com`; старый Railway hostname не допускается в HTML и XML.
+
 Security-скрипты:
 
 ```powershell

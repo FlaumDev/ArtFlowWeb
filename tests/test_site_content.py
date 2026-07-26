@@ -236,7 +236,9 @@ def test_public_routes_keep_working_without_real_database(monkeypatch):
         )
     assert error.value.status_code == 404
     assert asyncio.run(faq_routes.faq(request_for("/faq"))).status_code == 200
-    assert asyncio.run(main.health()) == {"status": "ok"}
+    health_response = asyncio.run(main.health())
+    assert health_response.status_code == 200
+    assert health_response.body == b'{"status":"ok"}'
 
 
 def test_detail_page_keeps_deep_link_and_separate_help_contacts(monkeypatch):

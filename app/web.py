@@ -8,6 +8,14 @@ from app.cache import ApplicationCaches
 from app.clock import current_date
 from app.config import Settings, settings
 from app.database import DatabasePool
+from app.seo import (
+    DEFAULT_DESCRIPTION,
+    DEFAULT_IMAGE_PATH,
+    SITE_LOCALE,
+    SITE_NAME,
+    meta_description,
+    plain_text,
+)
 
 
 def request_settings(request: Request) -> Settings:
@@ -32,29 +40,50 @@ def page_context(
     show_contact_section: bool = False,
     show_floating_contact: bool = False,
     og_image: str | None = None,
+    fallback_image: str | None = None,
+    indexable: bool = True,
+    og_type: str = "website",
 ) -> dict[str, Any]:
     active_settings = request_settings(request)
     public_base_url = active_settings.public_https_base_url
     canonical_url = (
-        f"{public_base_url}{request.url.path}" if public_base_url else None
+        f"{public_base_url}{request.url.path}"
+        if public_base_url and indexable
+        else None
     )
 
     selected_image = og_image if og_image and og_image.startswith("https://") else None
-    selected_image = selected_image or site_content["media"].get("hero_main")
+    selected_image = (
+        selected_image
+        or fallback_image
+        or site_content["media"].get("hero_main")
+        or DEFAULT_IMAGE_PATH
+    )
     if selected_image and selected_image.startswith("/static/"):
         image_base = public_base_url or str(request.base_url).rstrip("/")
         selected_image = f"{image_base}{selected_image}"
     elif selected_image and not selected_image.startswith("https://"):
         selected_image = None
 
+    seo_title = plain_text(title) or SITE_NAME
+    seo_description = meta_description(description, DEFAULT_DESCRIPTION)
     return {
         "request": request,
-        "title": title,
-        "meta_description": description,
-        "og_title": title,
-        "og_description": description,
+        "title": seo_title,
+        "seo_title": seo_title,
+        "meta_description": seo_description,
+        "seo_description": seo_description,
+        "robots": "index, follow" if indexable else "noindex, nofollow",
+        "og_title": seo_title,
+        "og_description": seo_description,
         "og_image": selected_image,
+        "og_url": canonical_url,
+        "og_type": og_type,
+        "og_site_name": SITE_NAME,
+        "og_locale": SITE_LOCALE,
+        "twitter_card": "summary_large_image",
         "canonical_url": canonical_url,
+        "structured_data": [],
         "current_year": current_date(active_settings).year,
         "telegram_url": active_settings.telegram_url,
         "site_content": site_content,

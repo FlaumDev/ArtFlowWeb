@@ -24,6 +24,15 @@ python -m scripts.check_production_settings
 Проверка требует `APP_ENV=production`, HTTPS origin в `BASE_URL`, выключенные docs,
 включённые security headers и явный allow-list хостов, содержащий публичный домен.
 
+Для текущего production-сайта канонический origin задаётся так:
+
+```text
+BASE_URL=https://artflowfest.com
+```
+
+Из этого значения приложение строит canonical, Open Graph URL, JSON-LD,
+`robots.txt` и sitemap. В `BASE_URL` не добавляются путь, query string или fragment.
+
 ## Railway, домены и proxy
 
 - В `ALLOWED_HOSTS` указываются фактический пользовательский домен и Railway public
@@ -97,6 +106,21 @@ python -m scripts.verify_production https://REAL_DOMAIN --competition-id PUBLISH
 health, отключённые docs, CSP/HSTS и остальные headers, неизвестный Host, 404,
 `robots.txt`, static `nosniff`, внешние ссылки и формат `competition_{id}`. Все пункты
 ручного production checklist приведены в `docs/security.md`.
+
+Дополнительно для SEO вручную проверьте исходный HTML `/`, `/competitions`, `/faq`
+и опубликованного конкурса: canonical должен начинаться с
+`https://artflowfest.com`, а `og:url` должен ему точно соответствовать. Затем:
+
+1. Добавьте `https://artflowfest.com` в Google Search Console.
+2. Добавьте тот же сайт в Яндекс Вебмастер.
+3. Отправьте в обе панели `https://artflowfest.com/sitemap.xml`.
+4. Проверьте опубликованный конкурс валидатором schema.org или Rich Results Test;
+   наличие `Event` зависит от реально заполненных названия, описания, даты и места.
+
+Страницы ошибок, ответы `503`, healthcheck и production docs не должны попадать в
+индекс. Старый Railway hostname может обслуживать технические запросы, но не должен
+появляться в canonical или sitemap; приложение не добавляет рискованный redirect на
+уровне FastAPI.
 
 ## Обязательный production checklist
 

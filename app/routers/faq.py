@@ -32,13 +32,14 @@ async def faq(request: Request) -> HTMLResponse:
     site_content = get_site_content()
     context = page_context(
         request,
-        title="Частые вопросы об участии - ArtFlow",
+        title="Частые вопросы об участии в конкурсах | ArtFlow",
         description=(
-            "Ответы на частые вопросы об участии в конкурсах ArtFlow, "
-            "подготовке, заявке и организации событий."
+            "Ответы ArtFlow на частые вопросы об участии в творческих "
+            "конкурсах, подготовке, подаче заявки и организации событий."
         ),
         site_content=site_content,
         active_page="faq",
+        indexable=status_code == 200,
     )
     context.update({"faq_items": faq_items, "load_error": load_error})
     return templates.TemplateResponse(

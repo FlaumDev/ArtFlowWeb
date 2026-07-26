@@ -3,18 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block page_title %}{{ title | default("ArtFlow") }}{% endblock %}</title>
-    <meta name="description" content="{{ meta_description | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ og_title | default(title) | default('ArtFlow') }}">
-    <meta property="og:description" content="{{ og_description | default(meta_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    <title>{% block page_title %}{{ seo_title | default(title) | default("ArtFlow") }}{% endblock %}</title>
+    <meta name="description" content="{{ seo_description | default(meta_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    <meta name="robots" content="{{ robots | default('noindex, nofollow') }}">
+    <meta property="og:type" content="{{ og_type | default('website') }}">
+    <meta property="og:title" content="{{ og_title | default(seo_title) | default('ArtFlow') }}">
+    <meta property="og:description" content="{{ og_description | default(seo_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    <meta property="og:site_name" content="{{ og_site_name | default('ArtFlow') }}">
+    <meta property="og:locale" content="{{ og_locale | default('ru_RU') }}">
     {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
-    {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ og_title | default(title) | default('ArtFlow') }}">
-    <meta name="twitter:description" content="{{ og_description | default(meta_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
+    {% if og_url %}<meta property="og:url" content="{{ og_url }}">{% endif %}
+    <meta name="twitter:card" content="{{ twitter_card | default('summary_large_image') }}">
+    <meta name="twitter:title" content="{{ og_title | default(seo_title) | default('ArtFlow') }}">
+    <meta name="twitter:description" content="{{ og_description | default(seo_description) | default('Творческие конкурсы ArtFlow для детей и подростков.') }}">
     {% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
     {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+    {% for item in structured_data | default([]) %}<script type="application/ld+json">{{ item | tojson }}</script>{% endfor %}
     <link rel="icon" href="{{ url_for('static', path='/images/artflow-logo-512.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}?v=8">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/components.css') }}?v=8">

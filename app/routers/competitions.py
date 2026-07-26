@@ -3,6 +3,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database import DatabaseUnavailableError
+from app.seo import (
+    DEFAULT_IMAGE_PATH,
+    competition_meta_description,
+    competition_structured_data,
+    plain_text,
+)
 from app.services.competitions import (
     get_competition_by_id,
     get_competitions,
@@ -42,15 +48,16 @@ async def competitions(request: Request) -> HTMLResponse:
     site_content = get_site_content()
     context = page_context(
         request,
-        title="Конкурсы ArtFlow - расписание и условия",
+        title="Конкурсы и фестивали ArtFlow — подать заявку онлайн",
         description=(
-            "Актуальные конкурсы ArtFlow: даты, города, направления, "
-            "стоимость и сроки подачи заявки."
+            "Опубликованные конкурсы и фестивали ArtFlow: даты, города, "
+            "направления, условия участия и сроки подачи заявки."
         ),
         site_content=site_content,
         active_page="competitions",
         show_contact_section=True,
         show_floating_contact=True,
+        indexable=status_code == 200,
     )
     context.update(
         {
@@ -95,6 +102,7 @@ async def competition_detail(
                 ),
                 site_content=site_content,
                 active_page="competitions",
+                indexable=False,
             ),
             status_code=503,
         )
@@ -103,16 +111,21 @@ async def competition_detail(
         raise HTTPException(status_code=404, detail="Competition not found")
 
     site_content = get_site_content()
+    competition_name = plain_text(competition.get("name")) or "Конкурс ArtFlow"
     context = page_context(
         request,
-        title=f"{competition['name']} - ArtFlow",
-        description=(
-            f"{competition['short_description']} "
-            f"Дата: {competition['event_date']}, город: {competition['city']}."
-        ),
+        title=f"{competition_name} — условия участия | ArtFlow",
+        description=competition_meta_description(competition),
         site_content=site_content,
         active_page="competitions",
         og_image=competition["poster_url"],
+        fallback_image=DEFAULT_IMAGE_PATH,
+    )
+    context["structured_data"] = competition_structured_data(
+        competition,
+        base_url=active_settings.public_https_base_url,
+        canonical_url=context["canonical_url"],
+        image_url=context["og_image"],
     )
     context["competition"] = competition
     return templates.TemplateResponse(

@@ -143,12 +143,15 @@ def _serialize_competition(
     short_description = raw_short_description or _DEFAULT_SHORT_DESCRIPTION
     description = raw_description or _DEFAULT_DESCRIPTION
 
-    event_date = _format_date(row.get("event_date")) or "Дата уточняется"
+    event_date_value = _date_value(row.get("event_date"))
+    event_date = _format_date(event_date_value) or "Дата уточняется"
     deadline_value = _date_value(row.get("application_deadline"))
     application_deadline = (
         _format_date(deadline_value) if deadline_value else "Срок уточняется"
     )
 
+    city = _text(row.get("city"))
+    place = _text(row.get("place"))
     return {
         "id": row.get("id"),
         "name": name,
@@ -156,8 +159,8 @@ def _serialize_competition(
         "description": description,
         "event_date": event_date,
         "application_deadline": application_deadline,
-        "city": _text(row.get("city")) or "Город уточняется",
-        "place": _text(row.get("place")) or "Место уточняется",
+        "city": city or "Город уточняется",
+        "place": place or "Место уточняется",
         "directions": _directions(row.get("directions")),
         "poster_url": _http_url(row.get("poster_url"), active_settings),
         "rules_url": _http_url(row.get("rules_url"), active_settings),
@@ -167,6 +170,16 @@ def _serialize_competition(
             and current_date(active_settings, now=now) <= deadline_value
         ),
         "telegram_url": _telegram_url(row.get("id"), active_settings),
+        "is_published": row.get("is_published") is True,
+        "seo_source": {
+            "name": _text(row.get("name")),
+            "description": raw_short_description or raw_description,
+            "event_date": (
+                event_date_value.isoformat() if event_date_value else None
+            ),
+            "city": city,
+            "place": place,
+        },
     }
 
 

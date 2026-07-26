@@ -119,10 +119,7 @@ TTL-cache также принадлежит экземпляру FastAPI и хр
 - `/`;
 - `/competitions`;
 - `/competitions/{competition_id}`;
-- `/faq`;
-- `/about`;
-- `/contacts`;
-- `/privacy`.
+- `/faq`.
 
 ### Services
 
@@ -149,6 +146,12 @@ TTL-cache также принадлежит экземпляру FastAPI и хр
 ### Templates
 
 Отвечают только за HTML-представление данных.
+
+Общий `page_context` передаёт шаблонам централизованный SEO-контекст. Модуль
+`app/seo.py` очищает текстовые метаданные и строит schema.org только из публичного
+`BASE_URL`, проверенного site content и фактических значений service-слоя. JSON-LD
+сериализуется Jinja2-фильтром `tojson`; строки из PostgreSQL не конкатенируются в
+`<script>` вручную. SEO не создаёт отдельный источник данных и не меняет SQL.
 
 ### Static
 
