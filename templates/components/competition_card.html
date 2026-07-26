@@ -1,3 +1,8 @@
+{% set card_availability = competition.available_fields | default(none) %}
+{% set card_has_short_description = card_availability is none or card_availability.short_description %}
+{% set card_has_event_date = card_availability is none or card_availability.event_date %}
+{% set card_has_deadline = card_availability is none or card_availability.application_deadline %}
+{% set card_has_city = card_availability is none or card_availability.city %}
 <article
     class="competition-card"
     data-competition-card
@@ -33,17 +38,19 @@
             <span class="status-badge {% if competition.registration_is_open %}is-open{% else %}is-closed{% endif %}">
                 {% if competition.registration_is_open %}Приём заявок открыт{% else %}Регистрация завершена{% endif %}
             </span>
-            <span class="poster-date">{{ competition.event_date or "Дата уточняется" }}</span>
+            {% if card_has_event_date %}<span class="poster-date">{{ competition.event_date }}</span>{% endif %}
         </span>
     </a>
 
     <div class="competition-card-body">
-        <p class="card-city">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-            {{ competition.city }}
-        </p>
+        {% if card_has_city %}
+            <p class="card-city">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                {{ competition.city }}
+            </p>
+        {% endif %}
         <h2><a href="{{ url_for('competition_detail', competition_id=competition.id) }}">{{ competition.name }}</a></h2>
-        <p class="card-description">{{ competition.short_description }}</p>
+        {% if card_has_short_description %}<p class="card-description">{{ competition.short_description }}</p>{% endif %}
 
         {% if competition.directions %}
             <ul class="tag-list card-tags" aria-label="Направления">
@@ -52,8 +59,8 @@
         {% endif %}
 
         <div class="card-footer">
-            <p><span>Подать до</span><strong>{{ competition.application_deadline }}</strong></p>
-            <a class="card-arrow" href="{{ url_for('competition_detail', competition_id=competition.id) }}" aria-label="Подробнее о конкурсе {{ competition.name }}">→</a>
+            {% if card_has_deadline %}<p><span>Подать до</span><strong>{{ competition.application_deadline }}</strong></p>{% endif %}
+            <a class="card-arrow" href="{{ url_for('competition_detail', competition_id=competition.id) }}" aria-label="Условия конкурса {{ competition.name }}">→</a>
         </div>
     </div>
 </article>

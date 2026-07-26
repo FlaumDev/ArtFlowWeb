@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from app.database import DatabaseUnavailableError
 from app.seo import (
     DEFAULT_IMAGE_PATH,
+    breadcrumb_structured_data,
     competition_meta_description,
     competition_structured_data,
     plain_text,
@@ -12,6 +13,7 @@ from app.seo import (
 from app.services.competitions import (
     get_competition_by_id,
     get_competitions,
+    get_related_competitions,
 )
 from app.site_content import get_site_content
 from app.web import (
@@ -58,6 +60,17 @@ async def competitions(request: Request) -> HTMLResponse:
         show_contact_section=True,
         show_floating_contact=True,
         indexable=status_code == 200,
+    )
+    context["breadcrumbs"] = [
+        {"label": "Главная", "url": request.url_for("index")},
+        {"label": "Конкурсы", "url": None},
+    ]
+    breadcrumb = breadcrumb_structured_data(
+        [("Главная", "/"), ("Конкурсы", "/competitions")],
+        base_url=active_settings.public_https_base_url,
+    )
+    context["structured_data"] = (
+        [breadcrumb] if breadcrumb and status_code == 200 else []
     )
     context.update(
         {
@@ -110,6 +123,19 @@ async def competition_detail(
     if competition is None:
         raise HTTPException(status_code=404, detail="Competition not found")
 
+    source = competition.get("seo_source")
+    source = source if isinstance(source, dict) else {}
+    try:
+        related_competitions = await get_related_competitions(
+            competition_id,
+            source.get("city"),
+            app_settings=active_settings,
+            database_pool=database_pool,
+            cache=caches.competitions,
+        )
+    except DatabaseUnavailableError:
+        related_competitions = []
+
     site_content = get_site_content()
     competition_name = plain_text(competition.get("name")) or "Конкурс ArtFlow"
     context = page_context(
@@ -127,7 +153,13 @@ async def competition_detail(
         canonical_url=context["canonical_url"],
         image_url=context["og_image"],
     )
+    context["breadcrumbs"] = [
+        {"label": "Главная", "url": request.url_for("index")},
+        {"label": "Конкурсы", "url": request.url_for("competitions")},
+        {"label": competition_name, "url": None},
+    ]
     context["competition"] = competition
+    context["related_competitions"] = related_competitions
     return templates.TemplateResponse(
         request=request,
         name="competition_detail.html",

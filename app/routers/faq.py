@@ -3,9 +3,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.database import DatabaseUnavailableError
+from app.seo import breadcrumb_structured_data
 from app.services.faq import get_faq_items
 from app.site_content import get_site_content
-from app.web import page_context, request_caches, request_database_pool
+from app.web import (
+    page_context,
+    request_caches,
+    request_database_pool,
+    request_settings,
+)
 
 
 router = APIRouter()
@@ -40,6 +46,17 @@ async def faq(request: Request) -> HTMLResponse:
         site_content=site_content,
         active_page="faq",
         indexable=status_code == 200,
+    )
+    context["breadcrumbs"] = [
+        {"label": "Главная", "url": request.url_for("index")},
+        {"label": "FAQ", "url": None},
+    ]
+    breadcrumb = breadcrumb_structured_data(
+        [("Главная", "/"), ("FAQ", "/faq")],
+        base_url=request_settings(request).public_https_base_url,
+    )
+    context["structured_data"] = (
+        [breadcrumb] if breadcrumb and status_code == 200 else []
     )
     context.update({"faq_items": faq_items, "load_error": load_error})
     return templates.TemplateResponse(

@@ -64,6 +64,76 @@ def test_home_and_mobile_menu(page, e2e_base_url):
     assert errors == []
 
 
+def test_content_navigation_breadcrumbs_and_related_competition(
+    page,
+    e2e_base_url,
+):
+    errors = _javascript_errors(page)
+    page.goto(f"{e2e_base_url}/")
+
+    page.locator("main").get_by_role(
+        "link",
+        name="О проекте ArtFlow",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/about")
+    expect(page.locator(".breadcrumbs")).to_contain_text("Главная")
+    expect(page.locator("h1")).to_have_text("О проекте ArtFlow")
+
+    page.locator(".breadcrumbs").get_by_role(
+        "link",
+        name="Главная",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/")
+
+    page.locator("main").get_by_role(
+        "link",
+        name="Как принять участие",
+        exact=True,
+    ).first.click()
+    expect(page).to_have_url(f"{e2e_base_url}/how-to-participate")
+
+    page.goto(f"{e2e_base_url}/competitions/7")
+    page.locator(".apply-links").get_by_role(
+        "link",
+        name="Как принять участие",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/how-to-participate")
+
+    page.goto(f"{e2e_base_url}/competitions/7")
+    related = page.locator(".related-competitions")
+    expect(related.locator("[data-competition-card]")).to_have_count(2)
+    related.get_by_role(
+        "link",
+        name="Музыкальная палитра",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/competitions/8")
+    assert errors == []
+
+
+def test_mobile_menu_opens_new_information_pages(page, e2e_base_url):
+    page.set_viewport_size({"width": 375, "height": 812})
+    page.goto(f"{e2e_base_url}/")
+    page.locator("[data-menu-toggle]").click()
+    page.locator("#site-menu").get_by_role(
+        "link",
+        name="О проекте",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/about")
+
+    page.locator("[data-menu-toggle]").click()
+    page.locator("#site-menu").get_by_role(
+        "link",
+        name="Как участвовать",
+        exact=True,
+    ).click()
+    expect(page).to_have_url(f"{e2e_base_url}/how-to-participate")
+
+
 def test_navigation_and_filters(page, e2e_base_url):
     errors = _javascript_errors(page)
     page.goto(f"{e2e_base_url}/")
@@ -248,7 +318,15 @@ def test_reveal_without_intersection_observer(browser, e2e_base_url):
 @pytest.mark.parametrize("width", [320, 375, 768, 1440])
 @pytest.mark.parametrize(
     "path",
-    ["/", "/competitions", "/competitions/7", "/faq", "/not-found"],
+    [
+        "/",
+        "/competitions",
+        "/competitions/7",
+        "/faq",
+        "/about",
+        "/how-to-participate",
+        "/not-found",
+    ],
 )
 def test_no_horizontal_overflow(page, e2e_base_url, path, width):
     page.set_viewport_size({"width": width, "height": 900})
@@ -277,7 +355,17 @@ def test_error_pages(page, e2e_base_url):
         expect(page.get_by_role("heading", name=heading, exact=True)).to_be_visible()
 
 
-@pytest.mark.parametrize("path", ["/", "/competitions", "/competitions/7", "/faq"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/",
+        "/competitions",
+        "/competitions/7",
+        "/faq",
+        "/about",
+        "/how-to-participate",
+    ],
+)
 def test_accessibility_basics(page, e2e_base_url, path):
     page.set_viewport_size({"width": 375, "height": 812})
     page.goto(f"{e2e_base_url}{path}")

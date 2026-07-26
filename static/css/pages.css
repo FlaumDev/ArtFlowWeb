@@ -681,4 +681,184 @@
         opacity 480ms ease var(--reveal-delay),
         translate 480ms ease var(--reveal-delay);
 }
+/* Information pages and internal linking */
+.info-hero {
+    padding: 58px 0 78px;
+    background: var(--color-blush);
+}
 
+.info-hero-copy {
+    max-width: 860px;
+}
+
+.info-hero-copy h1 {
+    font-size: 56px;
+}
+
+.info-hero-copy > p:last-child {
+    max-width: 760px;
+    margin-top: 22px;
+    color: var(--color-muted);
+    font-size: 18px;
+}
+
+.info-page-section {
+    background: #fff;
+}
+
+.info-page-layout {
+    display: grid;
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 76px;
+}
+
+.info-page-main {
+    min-width: 0;
+}
+
+.info-page-main > section + section {
+    padding-top: 56px;
+    margin-top: 56px;
+    border-top: 1px solid #eee7e3;
+}
+
+.info-page-main h2 {
+    max-width: 760px;
+    font-size: 34px;
+}
+
+.info-page-main section > p:last-child,
+.info-page-main section > p:not(.eyebrow) {
+    max-width: 780px;
+    margin-top: 18px;
+    color: var(--color-muted);
+}
+
+.info-page-main .text-arrow {
+    margin-top: 18px;
+}
+
+.info-list {
+    display: grid;
+    max-width: 780px;
+    gap: 12px;
+    padding-left: 24px;
+    margin: 24px 0 0;
+    color: var(--color-muted);
+}
+
+.info-page-aside {
+    position: sticky;
+    top: 112px;
+    padding-left: 26px;
+    border-left: 3px solid var(--color-powder);
+}
+
+.info-page-aside h2 {
+    font-size: 27px;
+}
+
+.info-page-aside > p:not(.eyebrow) {
+    margin-top: 14px;
+    color: var(--color-muted);
+    font-size: 14px;
+}
+
+.info-actions {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.participation-steps {
+    display: grid;
+    gap: 22px;
+    padding: 0;
+    margin: 30px 0 0;
+    list-style: none;
+}
+
+.participation-steps li {
+    display: grid;
+    align-items: start;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 16px;
+}
+
+.participation-steps > li > span {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--color-plum);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.participation-steps h3 {
+    font-size: 19px;
+}
+
+.participation-steps p {
+    margin-top: 6px;
+    color: var(--color-muted);
+}
+
+.journey-actions,
+.empty-state-actions,
+.apply-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 22px;
+    margin-top: 30px;
+}
+
+.about-copy > .text-arrow {
+    margin-top: 26px;
+}
+
+.catalog-guide,
+.faq-guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding-top: 48px;
+    margin-top: 64px;
+    border-top: 1px solid #eee7e3;
+}
+
+.catalog-guide h2,
+.faq-guide h2 {
+    font-size: 30px;
+}
+
+.catalog-guide p:last-child,
+.faq-guide p:not(.eyebrow) {
+    max-width: 680px;
+    margin-top: 12px;
+    color: var(--color-muted);
+}
+
+.faq-guide {
+    display: block;
+}
+
+.faq-guide .text-arrow {
+    margin-top: 14px;
+}
+
+.apply-section > p {
+    max-width: 720px;
+    margin-top: 18px;
+    color: #675a62;
+}
+
+.related-competitions {
+    background: var(--color-surface-warm);
+}

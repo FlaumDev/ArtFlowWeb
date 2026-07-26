@@ -12,9 +12,7 @@
                     Выбрать конкурс
                     <span aria-hidden="true">→</span>
                 </a>
-                {% if site_content.sections.gallery_enabled and site_content.gallery %}
-                    <a class="button button-quiet" href="#gallery">Посмотреть, как всё проходит</a>
-                {% endif %}
+                <a class="button button-quiet" href="{{ url_for('how_to_participate') }}">Как принять участие</a>
             </div>
             <div class="hero-trust">
                 <span class="trust-mark" aria-hidden="true">
@@ -208,10 +206,11 @@
             <h2 id="about-title">{{ site_content.brand.about_title }}</h2>
             <p class="about-lead">{{ site_content.brand.about_text }}</p>
             <div class="about-points">
-                <div><span>01</span><p>Первый или новый выход на сцену становится настоящим творческим опытом.</p></div>
-                <div><span>02</span><p>Поддержка родителей и педагогов помогает участнику чувствовать себя увереннее.</p></div>
-                <div><span>03</span><p>После выступления остаются эмоции, фотографии и воспоминания о важном дне.</p></div>
+                <div><span>01</span><p>Сравните опубликованные события и откройте страницу выбранного конкурса.</p></div>
+                <div><span>02</span><p>Проверьте доступные сроки, место, стоимость и положение до подачи заявки.</p></div>
+                <div><span>03</span><p>Перейдите в Telegram-бот именно со страницы нужного конкурса.</p></div>
             </div>
+            <a class="text-arrow" href="{{ url_for('about') }}">О проекте ArtFlow <span aria-hidden="true">→</span></a>
         </div>
     </div>
 </section>
@@ -244,6 +243,10 @@
                 <div><h3>Получите поддержку</h3><p>Уточните детали у организаторов удобным способом.</p></div>
             </li>
         </ol>
+        <div class="journey-actions" data-reveal>
+            <a class="button primary" href="{{ url_for('competitions') }}">Посмотреть конкурсы</a>
+            <a class="text-arrow" href="{{ url_for('how_to_participate') }}">Подробная инструкция <span aria-hidden="true">→</span></a>
+        </div>
     </div>
 </section>
 

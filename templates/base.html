@@ -20,10 +20,10 @@
     {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
     {% for item in structured_data | default([]) %}<script type="application/ld+json">{{ item | tojson }}</script>{% endfor %}
     <link rel="icon" href="{{ url_for('static', path='/images/artflow-logo-512.png') }}" type="image/png">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/components.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/pages.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/responsive.css') }}?v=8">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/base.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/components.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/pages.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/responsive.css') }}?v=9">
 </head>
 <body>
     <a class="skip-link" href="#main-content">Перейти к содержанию</a>
@@ -55,8 +55,8 @@
                 <nav class="site-nav" aria-label="Основная навигация">
                     <a href="{{ url_for('index') }}"{% if active_page == "home" %} aria-current="page"{% endif %}>Главная</a>
                     <a href="{{ url_for('competitions') }}"{% if active_page == "competitions" %} aria-current="page"{% endif %}>Конкурсы</a>
-                    <a href="{{ url_for('index') }}#about">О проекте</a>
-                    <a href="{{ url_for('index') }}#gallery">Фотографии</a>
+                    <a href="{{ url_for('about') }}"{% if active_page == "about" %} aria-current="page"{% endif %}>О проекте</a>
+                    <a href="{{ url_for('how_to_participate') }}"{% if active_page == "how-to-participate" %} aria-current="page"{% endif %}>Как участвовать</a>
                     <a href="{{ url_for('faq') }}"{% if active_page == "faq" %} aria-current="page"{% endif %}>FAQ</a>
                 </nav>
 
@@ -152,9 +152,10 @@
 
             <nav class="footer-nav" aria-label="Разделы сайта">
                 <p class="footer-title">Разделы</p>
+                <a href="{{ url_for('index') }}">Главная</a>
                 <a href="{{ url_for('competitions') }}">Конкурсы</a>
-                <a href="{{ url_for('index') }}#about">О проекте</a>
-                <a href="{{ url_for('index') }}#gallery">Фотографии</a>
+                <a href="{{ url_for('about') }}">О проекте</a>
+                <a href="{{ url_for('how_to_participate') }}">Как принять участие</a>
                 <a href="{{ url_for('faq') }}">FAQ</a>
             </nav>
 
@@ -204,6 +205,6 @@
         </div>
     {% endif %}
 
-    <script src="{{ url_for('static', path='/js/main.js') }}?v=8" defer></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}?v=9" defer></script>
 </body>
 </html>

@@ -868,3 +868,55 @@
         animation-iteration-count: 1 !important;
     }
 }
+@media (max-width: 960px) {
+    .info-page-layout {
+        grid-template-columns: 1fr;
+        gap: 58px;
+    }
+
+    .info-page-aside {
+        position: static;
+        max-width: 680px;
+    }
+}
+
+@media (max-width: 720px) {
+    .info-hero {
+        padding: 34px 0 62px;
+    }
+
+    .info-hero-copy h1 {
+        font-size: 40px;
+    }
+
+    .info-page-main h2 {
+        font-size: 29px;
+    }
+
+    .catalog-guide,
+    .journey-actions,
+    .apply-links {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .catalog-guide .button,
+    .journey-actions .button,
+    .apply-links .button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 430px) {
+    .info-hero-copy h1 {
+        font-size: 35px;
+    }
+
+    .breadcrumbs {
+        font-size: 12px;
+    }
+
+    .info-page-aside {
+        padding-left: 18px;
+    }
+}

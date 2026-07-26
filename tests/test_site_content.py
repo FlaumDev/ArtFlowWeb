@@ -208,6 +208,7 @@ def test_site_contacts_do_not_change_competition_sql():
     queries = (
         competitions_repository._PUBLISHED_COMPETITIONS_SQL,
         competitions_repository._PUBLISHED_COMPETITIONS_WITH_LIMIT_SQL,
+        competitions_repository._RELATED_COMPETITIONS_SQL,
         competitions_repository._PUBLISHED_COMPETITION_BY_ID_SQL,
     )
 

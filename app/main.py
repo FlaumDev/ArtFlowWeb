@@ -34,6 +34,7 @@ from app.observability import (
 )
 from app.routers.competitions import router as competitions_router
 from app.routers.faq import router as faq_router
+from app.routers.pages import router as pages_router
 from app.security import (
     DOCS_CONTENT_SECURITY_POLICY,
     SECURITY_HEADERS,
@@ -189,7 +190,13 @@ async def robots(request: Request) -> PlainTextResponse:
 def _sitemap_document(base_url: str | None, competition_ids: list[int]) -> bytes:
     urlset = Element("urlset", xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
     if base_url:
-        for path in ("/", "/competitions", "/faq"):
+        for path in (
+            "/",
+            "/competitions",
+            "/faq",
+            "/about",
+            "/how-to-participate",
+        ):
             url = SubElement(urlset, "url")
             SubElement(url, "loc").text = f"{base_url}{path}"
         for competition_id in competition_ids:
@@ -340,6 +347,7 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     application.mount("/static", StaticFiles(directory="static"), name="static")
     application.include_router(competitions_router)
     application.include_router(faq_router)
+    application.include_router(pages_router)
     application.include_router(core_router)
     application.add_exception_handler(404, not_found)
     application.add_exception_handler(Exception, server_error)

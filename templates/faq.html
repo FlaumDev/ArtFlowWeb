@@ -2,15 +2,18 @@
 
 {% block content %}
 <section class="faq-hero" aria-labelledby="faq-page-title">
-    <div class="container faq-hero-layout">
-        <div data-reveal="hero">
-            <p class="eyebrow">Вопросы и ответы</p>
-            <h1 id="faq-page-title">Всё важное перед выходом на сцену</h1>
-            <p>Коротко отвечаем об участии, заявке и организации событий ArtFlow.</p>
+    <div class="container">
+        {% include "components/breadcrumbs.html" %}
+        <div class="faq-hero-layout">
+            <div data-reveal="hero">
+                <p class="eyebrow">Вопросы и ответы</p>
+                <h1 id="faq-page-title">Всё важное перед выходом на сцену</h1>
+                <p>Коротко отвечаем об участии, заявке и опубликованных условиях конкурсов.</p>
+            </div>
+            {% if site_content.media.about %}
+                <figure data-reveal="hero" data-reveal-delay="70"><img src="{{ site_content.media.about }}" {% if site_content.media.about_small %}srcset="{{ site_content.media.about_small }} 960w, {{ site_content.media.about }} 1600w"{% endif %} sizes="(max-width: 760px) 100vw, 460px" alt="" width="{{ site_content.media.about_width }}" height="{{ site_content.media.about_height }}" loading="eager" decoding="async"></figure>
+            {% endif %}
         </div>
-        {% if site_content.media.about %}
-            <figure data-reveal="hero" data-reveal-delay="70"><img src="{{ site_content.media.about }}" {% if site_content.media.about_small %}srcset="{{ site_content.media.about_small }} 960w, {{ site_content.media.about }} 1600w"{% endif %} sizes="(max-width: 760px) 100vw, 460px" alt="" width="{{ site_content.media.about_width }}" height="{{ site_content.media.about_height }}" loading="eager" decoding="async"></figure>
-        {% endif %}
     </div>
 </section>
 
@@ -30,6 +33,13 @@
                     <p>Мы готовим полезную информацию об участии и организации конкурсов.</p>
                 </div>
             {% endif %}
+
+            <section class="faq-guide" aria-labelledby="faq-guide-title">
+                <p class="eyebrow">Подача заявки</p>
+                <h2 id="faq-guide-title">Нужна пошаговая инструкция?</h2>
+                <p>Посмотрите, как выбрать конкурс, проверить условия и перейти к заявке в Telegram.</p>
+                <a class="text-arrow" href="{{ url_for('how_to_participate') }}">Как принять участие <span aria-hidden="true">→</span></a>
+            </section>
         </div>
 
         {% if site_content.has_contacts %}
@@ -38,7 +48,7 @@
                     <svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
                 </span>
                 <h2 id="faq-contact-title">Не нашли ответ?</h2>
-                <p>Напишите организаторам — поможем разобраться в условиях и выбрать подходящий конкурс.</p>
+                <p>Используйте опубликованные контакты, чтобы уточнить условия выбранного конкурса.</p>
                 <div class="faq-contact-links">
                     {% for organizer in site_content.contacts.organizers %}
                         {% if loop.first and organizer.whatsapp_url %}<a class="button primary" href="{{ organizer.whatsapp_url }}" target="_blank" rel="noopener noreferrer">Написать в WhatsApp</a>{% endif %}

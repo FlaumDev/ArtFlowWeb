@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="info-hero" aria-labelledby="participation-page-title">
+    <div class="container">
+        {% include "components/breadcrumbs.html" %}
+        <div class="info-hero-copy" data-reveal="hero">
+            <p class="eyebrow">Пошаговая инструкция</p>
+            <h1 id="participation-page-title">Как принять участие в конкурсе ArtFlow</h1>
+            <p>Выберите опубликованный конкурс, проверьте его условия и перейдите к заявке в Telegram-бот. Все доступные сведения о событии лучше посмотреть до начала заполнения.</p>
+        </div>
+    </div>
+</section>
+
+<section class="page-section info-page-section">
+    <div class="container info-page-layout">
+        <div class="info-page-main">
+            <section aria-labelledby="participation-steps-title">
+                <p class="eyebrow">Порядок действий</p>
+                <h2 id="participation-steps-title">От выбора конкурса до отправки заявки</h2>
+                <ol class="participation-steps">
+                    <li><span>1</span><div><h3>Откройте каталог</h3><p>Посмотрите опубликованные события и выберите подходящий конкурс.</p></div></li>
+                    <li><span>2</span><div><h3>Изучите страницу конкурса</h3><p>Проверьте дату, срок подачи, город, площадку, стоимость и положение, если эти сведения опубликованы.</p></div></li>
+                    <li><span>3</span><div><h3>Нажмите кнопку заявки</h3><p>Активная кнопка открывает Telegram-бот для выбранного конкурса.</p></div></li>
+                    <li><span>4</span><div><h3>Следуйте шагам бота</h3><p>Введите запрошенные сведения, проверьте их и отправьте заявку по подсказкам в Telegram.</p></div></li>
+                </ol>
+            </section>
+
+            <section aria-labelledby="prepare-title">
+                <p class="eyebrow">Перед началом</p>
+                <h2 id="prepare-title">Что подготовить заранее</h2>
+                <p>Подготовьте сведения, указанные в условиях выбранного конкурса. Точный набор данных зависит от события; сайт не добавляет к нему поля от себя.</p>
+            </section>
+
+            <section aria-labelledby="question-title">
+                <p class="eyebrow">Нужна помощь</p>
+                <h2 id="question-title">Где уточнить вопрос</h2>
+                <p>Ответы на общие вопросы собраны в FAQ. По условиям конкретного события используйте опубликованные на сайте контакты; заявка при этом подаётся через кнопку конкурса.</p>
+                <a class="text-arrow" href="{{ url_for('faq') }}">Прочитать частые вопросы <span aria-hidden="true">→</span></a>
+            </section>
+        </div>
+
+        <aside class="info-page-aside" aria-labelledby="participation-next-title">
+            <p class="eyebrow">Начать</p>
+            <h2 id="participation-next-title">Перейдите к выбору события</h2>
+            <p>Сначала откройте каталог: ссылка на Telegram для конкретной заявки находится на странице выбранного конкурса.</p>
+            <div class="info-actions">
+                <a class="button primary" href="{{ url_for('competitions') }}">Посмотреть конкурсы</a>
+                {% if telegram_url %}<a class="button button-quiet" href="{{ telegram_url }}" target="_blank" rel="noopener noreferrer">Открыть Telegram-бот</a>{% endif %}
+                <a class="text-arrow" href="{{ url_for('about') }}">О проекте ArtFlow <span aria-hidden="true">→</span></a>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

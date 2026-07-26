@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from app import database
+from app.cache import ApplicationCaches
 from app.config import normalize_bot_username
 from app.repositories import competitions as competitions_repository
 from app.services import competitions as competitions_service
@@ -270,6 +271,7 @@ def test_repository_queries_are_select_only():
     queries = (
         competitions_repository._PUBLISHED_COMPETITIONS_SQL,
         competitions_repository._PUBLISHED_COMPETITIONS_WITH_LIMIT_SQL,
+        competitions_repository._RELATED_COMPETITIONS_SQL,
         competitions_repository._PUBLISHED_COMPETITION_BY_ID_SQL,
     )
     forbidden = {"INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TRUNCATE"}
@@ -285,6 +287,11 @@ def test_repository_queries_are_select_only():
     assert "LIMIT %S" in " ".join(
         competitions_repository._PUBLISHED_COMPETITIONS_WITH_LIMIT_SQL.upper().split()
     )
+    related_query = " ".join(
+        competitions_repository._RELATED_COMPETITIONS_SQL.upper().split()
+    )
+    assert "ID <> %S" in related_query
+    assert "LIMIT %S" in related_query
     assert "ID = %S" in " ".join(
         competitions_repository._PUBLISHED_COMPETITION_BY_ID_SQL.upper().split()
     )
@@ -303,3 +310,95 @@ def test_missing_pool_returns_controlled_error(monkeypatch):
 
     with pytest.raises(database.DatabaseUnavailableError):
         asyncio.run(acquire())
+
+def test_related_competitions_are_bounded_deduplicated_published_and_cached(
+    monkeypatch,
+):
+    calls = []
+
+    async def related_rows(
+        competition_id,
+        *,
+        city,
+        reference_date,
+        limit,
+        pool,
+    ):
+        calls.append(
+            {
+                "competition_id": competition_id,
+                "city": city,
+                "reference_date": reference_date,
+                "limit": limit,
+                "pool": pool,
+            }
+        )
+        return [
+            competition_row(id=8, name="Same city"),
+            competition_row(id=7, name="Current"),
+            competition_row(id=9, name="Unpublished", is_published=False),
+            competition_row(id=8, name="Duplicate"),
+            competition_row(id=10, name="Another"),
+            competition_row(id=11, name="Beyond limit"),
+        ]
+
+    monkeypatch.setattr(
+        competitions_repository,
+        "get_related_published_competitions",
+        related_rows,
+    )
+    pool = object()
+    cache = ApplicationCaches().competitions
+    fixed_now = datetime(2026, 9, 1, 20, 30, tzinfo=timezone.utc)
+
+    first = asyncio.run(
+        competitions_service.get_related_competitions(
+            7,
+            "Алматы",
+            limit=8,
+            database_pool=pool,
+            cache=cache,
+            now=fixed_now,
+        )
+    )
+    second = asyncio.run(
+        competitions_service.get_related_competitions(
+            7,
+            "Алматы",
+            limit=8,
+            database_pool=pool,
+            cache=cache,
+            now=fixed_now,
+        )
+    )
+
+    assert [item["id"] for item in first] == [8, 10, 11]
+    assert second == first
+    assert len(calls) == 1
+    assert calls[0]["competition_id"] == 7
+    assert calls[0]["city"] == "Алматы"
+    assert calls[0]["limit"] == 3
+    assert calls[0]["pool"] is pool
+
+
+@pytest.mark.parametrize(("competition_id", "limit"), [(0, 3), (-1, 3), (7, 0)])
+def test_invalid_related_competition_request_skips_repository(
+    monkeypatch,
+    competition_id,
+    limit,
+):
+    async def must_not_load(*args, **kwargs):
+        raise AssertionError("Repository must not be called")
+
+    monkeypatch.setattr(
+        competitions_repository,
+        "get_related_published_competitions",
+        must_not_load,
+    )
+    assert asyncio.run(
+        competitions_service.get_related_competitions(
+            competition_id,
+            "Алматы",
+            limit=limit,
+        )
+    ) == []

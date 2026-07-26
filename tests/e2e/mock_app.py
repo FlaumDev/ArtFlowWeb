@@ -103,6 +103,21 @@ async def one_competition(
     )
 
 
+async def related_competitions(
+    competition_id: int,
+    _city=None,
+    limit: int = 3,
+    app_settings=None,
+    database_pool=None,
+    cache=None,
+):
+    return [
+        item
+        for item in COMPETITIONS
+        if item["id"] != competition_id and item.get("is_published", True)
+    ][:limit]
+
+
 async def faq_items(database_pool=None, cache=None):
     return FAQ_ITEMS
 
@@ -111,6 +126,7 @@ main_module.get_featured_competitions = featured_competitions
 main_module.get_faq_items = faq_items
 competition_routes.get_competitions = all_competitions
 competition_routes.get_competition_by_id = one_competition
+competition_routes.get_related_competitions = related_competitions
 faq_routes.get_faq_items = faq_items
 
 E2E_SETTINGS = Settings(

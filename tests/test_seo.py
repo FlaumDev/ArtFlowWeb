@@ -154,6 +154,29 @@ def install_public_data(monkeypatch, *, competitions=None, faq_items=None):
             None,
         )
 
+    async def related_competitions(
+        competition_id,
+        _city=None,
+        limit=3,
+        *args,
+        **kwargs,
+    ):
+        related = []
+        seen_ids = {competition_id}
+        for item in items:
+            item_id = item.get("id")
+            if (
+                type(item_id) is not int
+                or item_id in seen_ids
+                or item.get("is_published") is False
+            ):
+                continue
+            seen_ids.add(item_id)
+            related.append(item)
+            if len(related) == limit:
+                break
+        return related
+
     async def faq(*args, **kwargs):
         return questions
 
@@ -162,6 +185,11 @@ def install_public_data(monkeypatch, *, competitions=None, faq_items=None):
     monkeypatch.setattr(main, "get_competitions", all_competitions)
     monkeypatch.setattr(competition_routes, "get_competitions", all_competitions)
     monkeypatch.setattr(competition_routes, "get_competition_by_id", competition_by_id)
+    monkeypatch.setattr(
+        competition_routes,
+        "get_related_competitions",
+        related_competitions,
+    )
     monkeypatch.setattr(faq_routes, "get_faq_items", faq)
 
 
@@ -234,6 +262,16 @@ def test_text_cleanup_removes_html_scripts_controls_and_truncates_words():
             "Частые вопросы об участии в конкурсах | ArtFlow",
             f"{CANONICAL_BASE_URL}/faq",
         ),
+        (
+            "/about",
+            "О проекте ArtFlow — конкурсы и подача заявки",
+            f"{CANONICAL_BASE_URL}/about",
+        ),
+        (
+            "/how-to-participate",
+            "Как принять участие в конкурсе ArtFlow",
+            f"{CANONICAL_BASE_URL}/how-to-participate",
+        ),
     ],
 )
 def test_public_pages_have_unique_metadata(
@@ -255,9 +293,10 @@ def test_public_pages_have_unique_metadata(
 def test_public_page_titles_and_descriptions_are_distinct(monkeypatch):
     install_public_data(monkeypatch)
     application = main.create_app(production_settings())
-    bodies = [html_response(application, path)[2] for path in ("/", "/competitions", "/faq")]
-    assert len({page_title(body) for body in bodies}) == 3
-    assert len({meta_content(body, name="description") for body in bodies}) == 3
+    paths = ("/", "/competitions", "/faq", "/about", "/how-to-participate")
+    bodies = [html_response(application, path)[2] for path in paths]
+    assert len({page_title(body) for body in bodies}) == len(paths)
+    assert len({meta_content(body, name="description") for body in bodies}) == len(paths)
 
 
 def test_canonical_ignores_query_string(monkeypatch):
@@ -337,11 +376,7 @@ def test_competition_event_and_breadcrumb_json_ld_use_only_real_fields(monkeypat
     assert event["image"] == ["https://cdn.example.test/posters/artflow.webp"]
     assert event["location"]["name"] == "Дворец творчества, Алматы"
     assert event["location"]["address"]["addressLocality"] == "Алматы"
-    assert event["organizer"] == {
-        "@type": "Organization",
-        "name": "ArtFlow",
-        "url": f"{CANONICAL_BASE_URL}/",
-    }
+
     forbidden = {
         "endDate",
         "eventStatus",
@@ -350,6 +385,7 @@ def test_competition_event_and_breadcrumb_json_ld_use_only_real_fields(monkeypat
         "aggregateRating",
         "review",
         "performer",
+        "organizer",
     }
     assert forbidden.isdisjoint(event)
     assert [item["position"] for item in breadcrumb["itemListElement"]] == [1, 2, 3]
@@ -551,6 +587,8 @@ def test_sitemap_uses_published_service_pool_and_cache(monkeypatch):
         f"{CANONICAL_BASE_URL}/",
         f"{CANONICAL_BASE_URL}/competitions",
         f"{CANONICAL_BASE_URL}/faq",
+        f"{CANONICAL_BASE_URL}/about",
+        f"{CANONICAL_BASE_URL}/how-to-participate",
         f"{CANONICAL_BASE_URL}/competitions/7",
         f"{CANONICAL_BASE_URL}/competitions/9",
     ]
@@ -591,6 +629,8 @@ def test_sitemap_database_failure_and_empty_list_keep_static_pages(monkeypatch):
         f"{CANONICAL_BASE_URL}/",
         f"{CANONICAL_BASE_URL}/competitions",
         f"{CANONICAL_BASE_URL}/faq",
+        f"{CANONICAL_BASE_URL}/about",
+        f"{CANONICAL_BASE_URL}/how-to-participate",
     ]
     assert b"private database detail" not in failed.body
 
@@ -680,7 +720,14 @@ def test_rendered_html_and_sitemap_do_not_contain_old_railway_domain(monkeypatch
     application = main.create_app(production_settings())
     documents = [
         html_response(application, path)[2]
-        for path in ("/", "/competitions", "/competitions/7", "/faq")
+        for path in (
+            "/",
+            "/competitions",
+            "/competitions/7",
+            "/faq",
+            "/about",
+            "/how-to-participate",
+        )
     ]
     documents.append(
         asyncio.run(main.sitemap(request_for(application, "/sitemap.xml"))).body.decode()
@@ -714,3 +761,171 @@ def test_service_seo_source_contains_actual_values_without_display_fallbacks():
         "city": None,
         "place": "Реальная сцена",
     }
+
+def _visible_breadcrumb_labels(body: str) -> list[str]:
+    match = re.search(
+        r'<nav class="breadcrumbs"[^>]*>(.*?)</nav>',
+        body,
+        re.DOTALL,
+    )
+    assert match
+    labels = re.findall(
+        r'(?:<a[^>]*>|<span aria-current="page">)([^<]+)</(?:a|span)>',
+        match.group(1),
+    )
+    return [unescape(label).strip() for label in labels]
+
+
+@pytest.mark.parametrize(
+    ("path", "labels"),
+    [
+        ("/competitions", ["Главная", "Конкурсы"]),
+        ("/faq", ["Главная", "FAQ"]),
+        ("/about", ["Главная", "О проекте"]),
+        (
+            "/how-to-participate",
+            ["Главная", "Как принять участие"],
+        ),
+        (
+            "/competitions/7",
+            ["Главная", "Конкурсы", "Весенний фестиваль искусств"],
+        ),
+    ],
+)
+def test_visible_and_json_ld_breadcrumbs_match(monkeypatch, path, labels):
+    install_public_data(monkeypatch)
+    _, _, body = html_response(main.create_app(production_settings()), path)
+    schema = next(
+        item
+        for item in structured_data(body)
+        if item["@type"] == "BreadcrumbList"
+    )
+    assert _visible_breadcrumb_labels(body) == labels
+    assert [item["name"] for item in schema["itemListElement"]] == labels
+    assert all(
+        item["item"].startswith(CANONICAL_BASE_URL)
+        for item in schema["itemListElement"]
+    )
+
+
+@pytest.mark.parametrize("path", ["/about", "/how-to-participate"])
+def test_information_pages_have_social_metadata_one_h1_and_fallback_image(
+    monkeypatch,
+    path,
+):
+    install_public_data(monkeypatch)
+    status, _, body = html_response(main.create_app(production_settings()), path)
+    assert status == 200
+    assert len(re.findall(r"<h1(?:\s|>)", body)) == 1
+    assert meta_content(body, name="robots") == "index, follow"
+    assert meta_content(body, prop="og:title") == page_title(body)
+    assert meta_content(body, prop="og:url") == f"{CANONICAL_BASE_URL}{path}"
+    assert meta_content(body, prop="og:image").startswith(CANONICAL_BASE_URL)
+    assert meta_content(body, name="twitter:card") == "summary_large_image"
+    assert meta_content(body, name="twitter:title") == page_title(body)
+
+
+def test_homepage_names_artflow_and_links_to_primary_pages(monkeypatch):
+    install_public_data(monkeypatch)
+    _, _, body = html_response(main.create_app(production_settings()), "/")
+    h1 = re.search(r'<h1[^>]*>(.*?)</h1>', body, re.DOTALL)
+    assert h1 and "ArtFlow" in unescape(h1.group(1))
+    assert 'href="https://testserver/competitions"' in body
+    assert 'href="https://testserver/about"' in body
+    assert 'href="https://testserver/how-to-participate"' in body
+    assert "visually-hidden" not in h1.group(0)
+
+
+def test_header_footer_and_content_use_crawlable_internal_links(monkeypatch):
+    install_public_data(monkeypatch)
+    _, _, body = html_response(main.create_app(production_settings()), "/")
+    for path in ("/", "/competitions", "/about", "/how-to-participate", "/faq"):
+        assert f'href="https://testserver{path}"' in body
+    internal_links = re.findall(
+        r'<a[^>]+href="https://testserver[^"]*"[^>]*>',
+        body,
+    )
+    assert internal_links
+    assert all("nofollow" not in link for link in internal_links)
+    assert "onclick=" not in body
+
+
+def test_catalog_has_factual_intro_and_empty_state_help_links(monkeypatch):
+    install_public_data(monkeypatch, competitions=[])
+    _, _, body = html_response(
+        main.create_app(production_settings()),
+        "/competitions",
+    )
+    assert "Здесь публикуются доступные творческие события" in body
+    assert "Расписание появится здесь после публикации" in body
+    assert 'href="https://testserver/how-to-participate"' in body
+    assert 'href="https://testserver/faq"' in body
+
+
+def test_competition_links_to_catalog_instruction_faq_and_related_items(monkeypatch):
+    items = [
+        sample_competition(),
+        sample_competition(
+            id=8,
+            name="<Другой конкурс>",
+            telegram_url="https://t.me/ArtFlowBot?start=competition_8",
+        ),
+        sample_competition(id=9, name="Скрытый конкурс", is_published=False),
+        sample_competition(id=8, name="Дубликат"),
+    ]
+    install_public_data(monkeypatch, competitions=items)
+    _, _, body = html_response(
+        main.create_app(production_settings()),
+        "/competitions/7",
+    )
+    assert 'href="https://testserver/competitions"' in body
+    assert 'href="https://testserver/how-to-participate"' in body
+    assert 'href="https://testserver/faq"' in body
+    related = body.split('id="related-title"', 1)[1]
+    assert "Другие конкурсы ArtFlow" in related
+    assert "&lt;Другой конкурс&gt;" in related
+    assert "Скрытый конкурс" not in related
+    assert "Дубликат" not in related
+    assert related.count("data-competition-card") == 1
+
+
+def test_competition_without_related_items_omits_related_block(monkeypatch):
+    install_public_data(monkeypatch)
+    _, _, body = html_response(
+        main.create_app(production_settings()),
+        "/competitions/7",
+    )
+    assert 'id="related-title"' not in body
+
+
+def test_missing_real_competition_facts_are_not_rendered(monkeypatch):
+    from app.services.competitions import _serialize_competition
+
+    item = _serialize_competition(
+        {
+            "id": 7,
+            "name": "Конкурс без расписания",
+            "short_description": "Подтверждённое описание",
+            "description": None,
+            "event_date": None,
+            "application_deadline": None,
+            "city": None,
+            "place": None,
+            "price": None,
+            "is_published": True,
+        },
+        production_settings(),
+    )
+    install_public_data(monkeypatch, competitions=[item])
+    _, _, body = html_response(
+        main.create_app(production_settings()),
+        "/competitions/7",
+    )
+    for fallback in (
+        "Дата уточняется",
+        "Срок уточняется",
+        "Город уточняется",
+        "Место уточняется",
+        "Стоимость уточняется",
+    ):
+        assert fallback not in body

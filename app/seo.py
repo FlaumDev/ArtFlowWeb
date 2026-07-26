@@ -141,6 +141,29 @@ def website_structured_data(
     return [website, organization]
 
 
+def breadcrumb_structured_data(
+    items: list[tuple[str, str]],
+    *,
+    base_url: str | None,
+) -> dict[str, Any] | None:
+    if not base_url or not items:
+        return None
+
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": position,
+                "name": plain_text(name),
+                "item": f"{base_url}{path}",
+            }
+            for position, (name, path) in enumerate(items, start=1)
+        ],
+    }
+
+
 def competition_structured_data(
     competition: dict[str, Any],
     *,
@@ -152,30 +175,16 @@ def competition_structured_data(
         return []
 
     display_name = plain_text(competition.get("name")) or "Конкурс ArtFlow"
-    breadcrumb = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Главная",
-                "item": f"{base_url}/",
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "Конкурсы",
-                "item": f"{base_url}/competitions",
-            },
-            {
-                "@type": "ListItem",
-                "position": 3,
-                "name": display_name,
-                "item": canonical_url,
-            },
+    breadcrumb = breadcrumb_structured_data(
+        [
+            ("Главная", "/"),
+            ("Конкурсы", "/competitions"),
+            (display_name, canonical_url.removeprefix(base_url)),
         ],
-    }
+        base_url=base_url,
+    )
+    if breadcrumb is None:
+        return []
 
     source = competition.get("seo_source")
     source = source if isinstance(source, dict) else {}
@@ -206,11 +215,7 @@ def competition_structured_data(
         "startDate": start_date,
         "url": canonical_url,
         "location": location,
-        "organizer": {
-            "@type": "Organization",
-            "name": SITE_NAME,
-            "url": f"{base_url}/",
-        },
+
     }
     if image_url and image_url.startswith("https://"):
         event["image"] = [image_url]

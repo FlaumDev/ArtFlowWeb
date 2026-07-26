@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% set availability = competition.available_fields | default(none) %}
+{% set has_short_description = availability is none or availability.short_description %}
+{% set has_description = availability is none or availability.description %}
+{% set has_event_date = availability is none or availability.event_date %}
+{% set has_deadline = availability is none or availability.application_deadline %}
+{% set has_city = availability is none or availability.city %}
+{% set has_place = availability is none or availability.place %}
+{% set has_price = availability is none or availability.price %}
 <section class="event-hero" aria-labelledby="event-title">
     <div class="container">
-        <a class="back-link" href="{{ url_for('competitions') }}"><span aria-hidden="true">←</span> Все конкурсы</a>
+        {% include "components/breadcrumbs.html" %}
         <div class="event-hero-layout">
             <div class="detail-poster poster-frame" aria-label="Афиша конкурса" data-poster data-reveal="hero">
                 {% if competition.poster_url %}
@@ -33,17 +41,23 @@
                     </span>
                 </div>
                 <h1 id="event-title">{{ competition.name }}</h1>
-                <p class="event-place-line">
-                    <span>
-                        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-                        {{ competition.city }}
-                    </span>
-                    <span>
-                        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 3v4m10-4v4M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                        {{ competition.event_date }}
-                    </span>
-                </p>
-                <p class="event-lead">{{ competition.short_description }}</p>
+                {% if has_city or has_event_date %}
+                    <p class="event-place-line">
+                        {% if has_city %}
+                            <span>
+                                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                                {{ competition.city }}
+                            </span>
+                        {% endif %}
+                        {% if has_event_date %}
+                            <span>
+                                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M7 3v4m10-4v4M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                                {{ competition.event_date }}
+                            </span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+                {% if has_short_description %}<p class="event-lead">{{ competition.short_description }}</p>{% endif %}
 
                 <div class="event-actions">
                     {% if competition.registration_is_open and competition.telegram_url %}
@@ -67,25 +81,29 @@
 <section class="event-content">
     <div class="container event-content-layout">
         <div class="event-main">
-            <section class="event-facts" aria-labelledby="facts-title">
-                <div class="section-heading narrow" data-reveal>
-                    <p class="eyebrow">Главное о событии</p>
-                    <h2 id="facts-title">Всё, что нужно запланировать</h2>
-                </div>
-                <dl class="facts-grid">
-                    <div data-reveal><dt>Дата</dt><dd>{{ competition.event_date }}</dd></div>
-                    <div data-reveal data-reveal-delay="70"><dt>Подать заявку до</dt><dd>{{ competition.application_deadline }}</dd></div>
-                    <div data-reveal data-reveal-delay="140"><dt>Город</dt><dd>{{ competition.city }}</dd></div>
-                    <div data-reveal><dt>Площадка</dt><dd>{{ competition.place }}</dd></div>
-                    <div data-reveal data-reveal-delay="70"><dt>Стоимость</dt><dd>{{ competition.price }}</dd></div>
-                </dl>
-            </section>
+            {% if has_event_date or has_deadline or has_city or has_place or has_price %}
+                <section class="event-facts" aria-labelledby="facts-title">
+                    <div class="section-heading narrow" data-reveal>
+                        <p class="eyebrow">Главное о событии</p>
+                        <h2 id="facts-title">Условия конкурса</h2>
+                    </div>
+                    <dl class="facts-grid">
+                        {% if has_event_date %}<div data-reveal><dt>Дата</dt><dd>{{ competition.event_date }}</dd></div>{% endif %}
+                        {% if has_deadline %}<div data-reveal data-reveal-delay="70"><dt>Подать заявку до</dt><dd>{{ competition.application_deadline }}</dd></div>{% endif %}
+                        {% if has_city %}<div data-reveal data-reveal-delay="140"><dt>Город</dt><dd>{{ competition.city }}</dd></div>{% endif %}
+                        {% if has_place %}<div data-reveal><dt>Площадка</dt><dd>{{ competition.place }}</dd></div>{% endif %}
+                        {% if has_price %}<div data-reveal data-reveal-delay="70"><dt>Стоимость</dt><dd>{{ competition.price }}</dd></div>{% endif %}
+                    </dl>
+                </section>
+            {% endif %}
 
-            <section class="event-section" aria-labelledby="about-event-title" data-reveal>
-                <p class="eyebrow">О конкурсе</p>
-                <h2 id="about-event-title">Событие для творческого роста</h2>
-                <p class="event-description">{{ competition.description }}</p>
-            </section>
+            {% if has_description %}
+                <section class="event-section" aria-labelledby="about-event-title" data-reveal>
+                    <p class="eyebrow">О конкурсе</p>
+                    <h2 id="about-event-title">О событии</h2>
+                    <p class="event-description">{{ competition.description }}</p>
+                </section>
+            {% endif %}
 
             <section class="event-section directions-section" aria-labelledby="directions-title" data-reveal>
                 <p class="eyebrow">Направления</p>
@@ -113,13 +131,13 @@
             <section class="apply-section" aria-labelledby="apply-title" data-reveal>
                 <div class="section-heading narrow">
                     <p class="eyebrow">Как подать заявку</p>
-                    <h2 id="apply-title">Несколько понятных шагов</h2>
+                    <h2 id="apply-title">Проверьте условия перед переходом в Telegram</h2>
                 </div>
-                <ol class="apply-steps">
-                    <li><span>1</span><p>Проверьте дату, направление и срок подачи.</p></li>
-                    <li><span>2</span><p>Перейдите в Telegram-бот по кнопке этого конкурса.</p></li>
-                    <li><span>3</span><p>Заполните данные участника и отправьте заявку.</p></li>
-                </ol>
+                <p>Кнопка заявки открывает Telegram-бот для этого конкурса. Подробный порядок действий и подготовка к заполнению собраны в отдельной инструкции.</p>
+                <div class="apply-links">
+                    <a class="button button-quiet" href="{{ url_for('how_to_participate') }}">Как принять участие</a>
+                    <a class="text-arrow" href="{{ url_for('faq') }}">Частые вопросы <span aria-hidden="true">→</span></a>
+                </div>
             </section>
 
             {% if site_content.contacts.organizers %}
@@ -148,7 +166,7 @@
         </div>
 
         <aside class="event-summary" aria-label="Краткая информация о заявке">
-            <p class="event-summary-date">{{ competition.event_date }}</p>
+            {% if has_event_date %}<p class="event-summary-date">{{ competition.event_date }}</p>{% endif %}
             <h2>{% if competition.registration_is_open %}Готовы участвовать?{% else %}Приём заявок завершён{% endif %}</h2>
             {% if competition.registration_is_open %}
                 <p>Заявка откроется в Telegram-боте сразу для этого конкурса.</p>
@@ -157,14 +175,34 @@
                 <p>Выберите другое доступное событие или уточните у организаторов будущие даты.</p>
                 <a class="button button-quiet full-width" href="{{ url_for('competitions') }}">Другие конкурсы</a>
             {% endif %}
-            <span class="summary-deadline">Срок подачи · {{ competition.application_deadline }}</span>
+            {% if has_deadline %}<span class="summary-deadline">Срок подачи · {{ competition.application_deadline }}</span>{% endif %}
         </aside>
     </div>
 </section>
 
+{% if related_competitions %}
+<section class="page-section related-competitions" aria-labelledby="related-title">
+    <div class="container">
+        <div class="section-row">
+            <div class="section-heading narrow">
+                <p class="eyebrow">Продолжить выбор</p>
+                <h2 id="related-title">Другие конкурсы ArtFlow</h2>
+            </div>
+            <a class="text-arrow" href="{{ url_for('competitions') }}">Все конкурсы <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="competition-grid">
+            {% for competition in related_competitions %}
+                {% set reveal_delay = (loop.index0 % 3) * 70 %}
+                {% include "components/competition_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 {% if competition.registration_is_open and competition.telegram_url %}
     <div class="detail-sticky-cta" data-sticky-cta>
-        <span>{{ competition.event_date }} · {{ competition.city }}</span>
+        {% if has_event_date or has_city %}<span>{% if has_event_date %}{{ competition.event_date }}{% endif %}{% if has_event_date and has_city %} · {% endif %}{% if has_city %}{{ competition.city }}{% endif %}</span>{% endif %}
         <a class="button primary" href="{{ competition.telegram_url }}" target="_blank" rel="noopener noreferrer">Подать заявку</a>
     </div>
 {% endif %}

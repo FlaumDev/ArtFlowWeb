@@ -2,23 +2,26 @@
 
 {% block content %}
 <section class="competitions-hero" aria-labelledby="competitions-title">
-    <div class="container competitions-hero-layout">
-        <div class="competitions-hero-copy" data-reveal="hero">
-            <p class="eyebrow">События ArtFlow</p>
-            <h1 id="competitions-title">Конкурсы, к которым хочется готовиться</h1>
-            <p>Выберите событие по городу, дате и творческому направлению. Все условия открыты до перехода к заявке.</p>
-            <div class="competitions-hero-meta">
-                {% if not load_error %}<span><strong>{{ competitions | length }}</strong> {{ "конкурс" if competitions | length == 1 else "события" }}</span>{% endif %}
-                {% if site_content.has_contacts %}<a href="#contact">Нужна помощь с выбором? <span aria-hidden="true">→</span></a>{% endif %}
+    <div class="container">
+        {% include "components/breadcrumbs.html" %}
+        <div class="competitions-hero-layout">
+            <div class="competitions-hero-copy" data-reveal="hero">
+                <p class="eyebrow">События ArtFlow</p>
+                <h1 id="competitions-title">Конкурсы и фестивали ArtFlow</h1>
+                <p>Здесь публикуются доступные творческие события. Откройте страницу конкурса, чтобы проверить актуальные условия и, когда регистрация открыта, перейти к заявке в Telegram.</p>
+                <div class="competitions-hero-meta">
+                    {% if not load_error %}<span><strong>{{ competitions | length }}</strong> {{ "конкурс" if competitions | length == 1 else "события" }}</span>{% endif %}
+                    {% if site_content.has_contacts %}<a href="#contact">Нужна помощь с выбором? <span aria-hidden="true">→</span></a>{% endif %}
+                </div>
             </div>
-        </div>
-        <div class="competitions-collage" aria-hidden="true" data-reveal="hero" data-reveal-delay="70">
-            {% if site_content.media.hero_main %}
-                <img src="{{ site_content.media.hero_main }}" {% if site_content.media.hero_main_small %}srcset="{{ site_content.media.hero_main_small }} 960w, {{ site_content.media.hero_main }} 1600w"{% endif %} sizes="(max-width: 760px) 65vw, 420px" alt="" width="{{ site_content.media.hero_main_width }}" height="{{ site_content.media.hero_main_height }}" loading="eager" decoding="async">
-            {% endif %}
-            {% if site_content.media.hero_secondary %}
-                <img src="{{ site_content.media.hero_secondary }}" {% if site_content.media.hero_secondary_small %}srcset="{{ site_content.media.hero_secondary_small }} 720w, {{ site_content.media.hero_secondary }} 1200w"{% endif %} sizes="(max-width: 760px) 42vw, 300px" alt="" width="{{ site_content.media.hero_secondary_width }}" height="{{ site_content.media.hero_secondary_height }}" loading="lazy" decoding="async">
-            {% endif %}
+            <div class="competitions-collage" aria-hidden="true" data-reveal="hero" data-reveal-delay="70">
+                {% if site_content.media.hero_main %}
+                    <img src="{{ site_content.media.hero_main }}" {% if site_content.media.hero_main_small %}srcset="{{ site_content.media.hero_main_small }} 960w, {{ site_content.media.hero_main }} 1600w"{% endif %} sizes="(max-width: 760px) 65vw, 420px" alt="" width="{{ site_content.media.hero_main_width }}" height="{{ site_content.media.hero_main_height }}" loading="eager" decoding="async">
+                {% endif %}
+                {% if site_content.media.hero_secondary %}
+                    <img src="{{ site_content.media.hero_secondary }}" {% if site_content.media.hero_secondary_small %}srcset="{{ site_content.media.hero_secondary_small }} 720w, {{ site_content.media.hero_secondary }} 1200w"{% endif %} sizes="(max-width: 760px) 42vw, 300px" alt="" width="{{ site_content.media.hero_secondary_width }}" height="{{ site_content.media.hero_secondary_height }}" loading="lazy" decoding="async">
+                {% endif %}
+            </div>
         </div>
     </div>
 </section>
@@ -76,11 +79,23 @@
         {% else %}
             <div class="empty-state">
                 <h2>Новые события готовятся</h2>
-                <p>Следите за новостями ArtFlow — расписание появится здесь после публикации.</p>
-                {% if site_content.contacts.instagram.url %}
-                    <a class="button button-quiet" href="{{ site_content.contacts.instagram.url }}" target="_blank" rel="noopener noreferrer">Открыть Instagram</a>
-                {% endif %}
+                <p>Расписание появится здесь после публикации.</p>
+                <div class="empty-state-actions">
+                    <a class="button button-quiet" href="{{ url_for('how_to_participate') }}">Как подать заявку</a>
+                    <a class="text-arrow" href="{{ url_for('faq') }}">Частые вопросы <span aria-hidden="true">→</span></a>
+                </div>
             </div>
+        {% endif %}
+
+        {% if not load_error %}
+            <section class="catalog-guide" aria-labelledby="catalog-guide-title" data-reveal>
+                <div>
+                    <p class="eyebrow">Как подать заявку</p>
+                    <h2 id="catalog-guide-title">Сначала выберите конкурс</h2>
+                    <p>На странице события проверьте опубликованные условия и откройте Telegram-бот по кнопке заявки.</p>
+                </div>
+                <a class="button button-quiet" href="{{ url_for('how_to_participate') }}">Узнать, как принять участие</a>
+            </section>
         {% endif %}
     </div>
 </section>

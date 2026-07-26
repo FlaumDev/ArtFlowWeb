@@ -58,9 +58,11 @@ python -m playwright install chromium
 python -m pytest -m e2e
 ```
 
-Проверяются главная, меню, каталог и фильтры, страница конкурса, deep link,
-FAQ, fallback афиши, sticky CTA, error pages, console errors, базовая доступность
-и отсутствие горизонтального overflow на ширинах 320, 375, 768 и 1440 px.
+Проверяются главная, меню, каталог и фильтры, страницы `/about` и
+`/how-to-participate`, breadcrumbs, переход к связанному конкурсу, страница конкурса,
+deep link, FAQ, fallback афиши, sticky CTA, error pages, console errors, базовая
+доступность и отсутствие горизонтального overflow на ширинах 320, 375, 768 и
+1440 px.
 Если Python-пакеты Playwright не установлены, тесты пропускаются с явной причиной.
 Если пакет установлен, но Chromium отсутствует, Playwright завершит запуск ошибкой с
 командой установки браузера.
@@ -89,8 +91,10 @@ python -m pytest -q tests/test_seo.py
 
 Он проверяет title/description, canonical и social metadata всех публичных страниц,
 `noindex` для ошибок и healthcheck, безопасный JSON-LD, фактический `Event`,
-`BreadcrumbList`, `robots.txt`, sitemap и соответствие каждого sitemap URL
-каноническому URL страницы. Тестовый production origin равен
+`BreadcrumbList`, соответствие видимых breadcrumbs JSON-LD, внутренние ссылки,
+ограниченный блок связанных опубликованных конкурсов, `robots.txt`, sitemap и
+соответствие каждого sitemap URL каноническому URL страницы. Тестовый production
+origin равен
 `https://artflowfest.com`; старый Railway hostname не допускается в HTML и XML.
 
 Security-скрипты:

@@ -171,6 +171,15 @@ def _serialize_competition(
         ),
         "telegram_url": _telegram_url(row.get("id"), active_settings),
         "is_published": row.get("is_published") is True,
+        "available_fields": {
+            "short_description": raw_short_description is not None,
+            "description": raw_description is not None,
+            "event_date": event_date_value is not None,
+            "application_deadline": deadline_value is not None,
+            "city": city is not None,
+            "place": place is not None,
+            "price": _text(row.get("price")) is not None,
+        },
         "seo_source": {
             "name": _text(row.get("name")),
             "description": raw_short_description or raw_description,
@@ -240,6 +249,69 @@ async def get_featured_competitions(
     if cache is None:
         return await load()
     return await cache.get_or_load(("featured", safe_limit), load)
+
+
+async def get_related_competitions(
+    competition_id: int,
+    city: str | None,
+    limit: int = 3,
+    app_settings: Settings | None = None,
+    *,
+    database_pool: DatabasePool | None = None,
+    cache: AsyncTTLCache[tuple[Any, ...], list[Competition]] | None = None,
+    now: datetime | None = None,
+) -> list[Competition]:
+    if competition_id <= 0 or limit <= 0:
+        return []
+
+    active_settings = app_settings or settings
+    safe_limit = min(limit, 3)
+    serialized_at = now or datetime.now(timezone.utc)
+    reference_date = current_date(active_settings, now=serialized_at)
+    normalized_city = _text(city)
+
+    async def load() -> list[Competition]:
+        rows = await competitions_repository.get_related_published_competitions(
+            competition_id,
+            city=normalized_city,
+            reference_date=reference_date,
+            limit=safe_limit,
+            pool=database_pool,
+        )
+        related: list[Competition] = []
+        seen_ids = {competition_id}
+        for row in rows:
+            item = _serialize_competition(
+                row,
+                active_settings,
+                now=serialized_at,
+            )
+            item_id = item.get("id")
+            if (
+                type(item_id) is not int
+                or item_id <= 0
+                or item_id in seen_ids
+                or item.get("is_published") is not True
+            ):
+                continue
+            seen_ids.add(item_id)
+            related.append(item)
+            if len(related) == safe_limit:
+                break
+        return related
+
+    if cache is None:
+        return await load()
+    return await cache.get_or_load(
+        (
+            "related",
+            competition_id,
+            normalized_city.casefold() if normalized_city else None,
+            reference_date.isoformat(),
+            safe_limit,
+        ),
+        load,
+    )
 
 
 async def get_competition_by_id(

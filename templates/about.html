@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="info-hero" aria-labelledby="about-page-title">
+    <div class="container">
+        {% include "components/breadcrumbs.html" %}
+        <div class="info-hero-copy" data-reveal="hero">
+            <p class="eyebrow">О проекте</p>
+            <h1 id="about-page-title">О проекте ArtFlow</h1>
+            <p>ArtFlow — сайт творческих конкурсов и фестивалей для детей и подростков. Здесь участники, родители и педагоги могут найти опубликованное событие, изучить его условия и перейти к заявке в Telegram.</p>
+        </div>
+    </div>
+</section>
+
+<section class="page-section info-page-section">
+    <div class="container info-page-layout">
+        <div class="info-page-main">
+            <section aria-labelledby="about-options-title">
+                <p class="eyebrow">Возможности сайта</p>
+                <h2 id="about-options-title">Что можно сделать через ArtFlow</h2>
+                <ul class="info-list">
+                    <li>Посмотреть опубликованные конкурсы и фестивали в общем каталоге.</li>
+                    <li>Открыть страницу события с датой, сроком подачи, местом, стоимостью и правилами, если эти сведения опубликованы.</li>
+                    <li>Перейти в Telegram-бот по кнопке конкретного конкурса.</li>
+                    <li>Найти ответы на частые вопросы и связаться по вопросам участия.</li>
+                </ul>
+            </section>
+
+            <section aria-labelledby="about-audience-title">
+                <p class="eyebrow">Для кого</p>
+                <h2 id="about-audience-title">Участникам и тем, кто помогает готовиться</h2>
+                <p>Материалы сайта рассчитаны на юных участников, их родителей, педагогов и руководителей творческих коллективов. Форматы участия и требования зависят от конкретного конкурса и указываются на его странице или в положении.</p>
+            </section>
+
+            <section aria-labelledby="about-application-title">
+                <p class="eyebrow">Подача заявки</p>
+                <h2 id="about-application-title">От условий конкурса к Telegram-боту</h2>
+                <p>Сначала выберите событие и проверьте опубликованные условия. Кнопка заявки на странице конкурса открывает Telegram-бот с идентификатором выбранного события, чтобы продолжить оформление именно для него.</p>
+                <a class="text-arrow" href="{{ url_for('how_to_participate') }}">Узнать, как принять участие <span aria-hidden="true">→</span></a>
+            </section>
+        </div>
+
+        <aside class="info-page-aside" aria-labelledby="about-next-title">
+            <p class="eyebrow">Следующий шаг</p>
+            <h2 id="about-next-title">Выберите подходящий путь</h2>
+            <p>Откройте каталог, прочитайте инструкцию или проверьте ответы на частые вопросы.</p>
+            <div class="info-actions">
+                <a class="button primary" href="{{ url_for('competitions') }}">Посмотреть конкурсы</a>
+                <a class="text-arrow" href="{{ url_for('how_to_participate') }}">Как принять участие <span aria-hidden="true">→</span></a>
+                <a class="text-arrow" href="{{ url_for('faq') }}">Частые вопросы <span aria-hidden="true">→</span></a>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}
