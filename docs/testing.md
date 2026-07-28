@@ -72,6 +72,22 @@ pytest-playwright и их транзитивных зависимостей. Н�
 и `requirements-e2e.txt` используются только как входные списки при осознанном
 обновлении lock-файлов.
 
+## Performance audit
+
+Инструмент использует установленный Python Playwright и локальный Chromium. Он не
+подключается к production без явного `--base-url`, по умолчанию блокирует сторонние
+resources и не отправляет формы или Telegram deep links:
+
+```powershell
+python -m scripts.performance_audit audit --base-url http://127.0.0.1:8000 --json-output dist/performance.json --markdown-output dist/performance.md
+python -m scripts.performance_audit structural-checks --report dist/performance.json
+python -m scripts.performance_audit compare dist/before.json dist/after.json --fail-on-regression --markdown-output dist/compare.md
+```
+
+Точные timing-значения не являются unit-test assertions. Детерминированные budgets
+для CSS, JavaScript, HTML, requests, DOM и fallback описаны в
+`docs/performance-budget.md`.
+
 ## Проверки backend
 
 ```powershell

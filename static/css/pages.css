@@ -674,6 +674,11 @@
     translate: 0 18px;
 }
 
+.js-enabled [data-reveal="hero"]:not(.is-revealed) {
+    opacity: 1;
+    translate: 0 0;
+}
+
 .js-enabled [data-reveal].is-revealed {
     opacity: 1;
     translate: 0 0;

@@ -109,6 +109,19 @@ py -m playwright install chromium
 python -m pytest -m e2e
 ```
 
+Снять воспроизводимый лабораторный performance-отчёт на локальном сервере:
+
+```powershell
+python -m scripts.performance_audit audit --base-url http://127.0.0.1:8000 --json-output dist/performance.json --markdown-output dist/performance.md
+python -m scripts.performance_audit structural-checks --report dist/performance.json
+```
+
+Сравнение двух отчётов с ошибкой при детерминированной регрессии более 10%:
+
+```powershell
+python -m scripts.performance_audit compare dist/before.json dist/after.json --fail-on-regression --markdown-output dist/compare.md
+```
+
 Проверить код и зависимости:
 
 ```powershell
@@ -263,7 +276,8 @@ ArtFlowWeb формирует ссылку, а ArtFlowBot обрабатывае
 - [Безопасность и production](docs/security.md)
 - [Deployment backend](docs/deployment.md)
 - [Тестирование](docs/testing.md)
-- [Бюджеты производительности](docs/performance.md)
+- [Аудит производительности](docs/performance.md)
+- [Performance budget и измеренный baseline](docs/performance-budget.md)
 - [Карта SEO-контента и внутренних ссылок](docs/seo-content-map.md)
 
 ## Безопасность

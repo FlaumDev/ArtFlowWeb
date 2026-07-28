@@ -166,6 +166,11 @@ TTL-cache также принадлежит экземпляру FastAPI и хр
 подключается в фиксированном порядке: `base.css`, `components.css`, `pages.css`,
 `responsive.css`. Это сохраняет единый cascade без препроцессора и inline-стилей.
 
+`CacheControlledStaticFiles` сохраняет conditional responses `ETag` /
+`Last-Modified`, добавляет immutable-cache только версионированным CSS/JS и короткий
+cache остальным assets. `CompressibleGZipMiddleware` сжимает текстовые ответы и
+пропускает форматы, которые уже сжаты. HTML не получает долгий public-cache.
+
 ### Observability
 
 ASGI middleware создаёт request ID, добавляет `X-Request-ID` в ответ и логирует route template, status code и duration. Development использует читаемые строки, production — JSON. Query string, тело запроса и текст исключения в application log не включаются; для исключения сохраняются только тип и стек без значения ошибки.

@@ -288,8 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { rootMargin: "0px 0px -8%", threshold: 0.08 });
 
         scrollRevealItems.forEach((item) => revealObserver.observe(item));
-        window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(() => heroRevealItems.forEach(reveal));
-        });
+        heroRevealItems.forEach(reveal);
     }
 });

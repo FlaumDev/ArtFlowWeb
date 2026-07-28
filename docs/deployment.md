@@ -107,6 +107,20 @@ health, отключённые docs, CSP/HSTS и остальные headers, н�
 `robots.txt`, static `nosniff`, внешние ссылки и формат `competition_{id}`. Все пункты
 ручного production checklist приведены в `docs/security.md`.
 
+После deployment отдельно проверьте compression и cache headers:
+
+```powershell
+curl.exe -sS -D - -o NUL -H "Accept-Encoding: gzip" https://REAL_DOMAIN/
+curl.exe -sS -D - -o NUL -H "Accept-Encoding: gzip" "https://REAL_DOMAIN/static/css/base.css?v=10"
+curl.exe -sS -D - -o NUL https://REAL_DOMAIN/static/images/hero-main-960.webp
+```
+
+HTML и CSS должны иметь ровно один `Content-Encoding: gzip` и
+`Vary: Accept-Encoding`. Версионированный CSS должен иметь годовой immutable-cache,
+WebP — короткий cache и не должен повторно gzip-сжиматься. Это также подтверждает,
+что Railway proxy не применил двойное сжатие. Полный локальный baseline и budgets
+описаны в `docs/performance-budget.md`.
+
 Дополнительно для SEO вручную проверьте исходный HTML `/`, `/competitions`, `/faq`
 и опубликованного конкурса: canonical должен начинаться с
 `https://artflowfest.com`, а `og:url` должен ему точно соответствовать. Затем:
@@ -136,7 +150,8 @@ health, отключённые docs, CSP/HSTS и остальные headers, н�
 8. Railway healthcheck использует `/health`, а не обязательную проверку БД.
 9. На edge/reverse proxy/CDN настроен инфраструктурный rate limiting.
 10. Выполнен `python -m scripts.verify_production` для реального HTTPS origin.
-11. Lighthouse запущен вручную, а фактические результаты сохранены владельцем.
+11. Выполнен локальный `scripts.performance_audit`, а после deployment вручную
+    запущен PageSpeed Insights; фактические результаты сохранены владельцем.
 12. Подтверждено согласие на публикацию фотографий несовершеннолетних.
 13. Владельцы разрешили публикацию всех показанных контактов.
 14. Проверено резервное копирование общей PostgreSQL и процедура восстановления.

@@ -13,7 +13,6 @@ from xml.etree.ElementTree import (  # nosec B405
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -32,6 +31,7 @@ from app.observability import (
     create_application_logger,
     disable_duplicate_uvicorn_access_log,
 )
+from app.performance import CacheControlledStaticFiles, CompressibleGZipMiddleware
 from app.routers.competitions import router as competitions_router
 from app.routers.faq import router as faq_router
 from app.routers.pages import router as pages_router
@@ -344,7 +344,11 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
         active_settings,
         name=f"artflow.application.{id(application):x}",
     )
-    application.mount("/static", StaticFiles(directory="static"), name="static")
+    application.mount(
+        "/static",
+        CacheControlledStaticFiles(directory="static"),
+        name="static",
+    )
     application.include_router(competitions_router)
     application.include_router(faq_router)
     application.include_router(pages_router)
@@ -371,6 +375,11 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
                 else None
             ),
         )
+    application.add_middleware(
+        CompressibleGZipMiddleware,
+        minimum_size=1000,
+        compresslevel=5,
+    )
     application.add_middleware(
         RequestLoggingMiddleware,
         logger=application.state.logger,
