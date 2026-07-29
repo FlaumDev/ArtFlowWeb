@@ -54,15 +54,9 @@
 7. Добавить metadata, canonical, social, H1, breadcrumb и sitemap-тесты.
 8. Не добавлять новый JSON-LD тип без подтверждённой необходимости.
 
-## После deployment
+## Production operations
 
-1. Открыть `/about` и `/how-to-participate` на production и проверить canonical,
-   breadcrumbs, мобильную вёрстку и обычные ссылки.
-2. Проверить `https://artflowfest.com/sitemap.xml` и повторно отправить его в
-   Google Search Console и Яндекс Вебмастер.
-3. Использовать URL Inspection для обеих новых страниц и запросить индексирование.
-4. Отслеживать показы, клики, CTR и среднюю позицию по брендовым запросам ArtFlow,
-   а также показы информационных запросов об участии.
-5. Проверять индексацию по данным панелей, а не по одному ручному поиску.
-6. Не создавать страницы городов и направлений до появления самостоятельной
-   пользовательской ценности и подтверждённого контента.
+Search Console, Yandex Webmaster, reindexing, snippets, and the eight-week
+monitoring schedule are maintained in docs/seo-production-runbook.md.
+Do not create city or direction pages until they have independent user value
+and verified source content.

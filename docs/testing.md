@@ -103,6 +103,7 @@ python -m pip_audit -r requirements.lock
 
 ```powershell
 python -m pytest -q tests/test_seo.py
+python -m pytest -q tests/test_production_seo_audit.py
 ```
 
 Он проверяет title/description, canonical и social metadata всех публичных страниц,
@@ -118,11 +119,17 @@ Security-скрипты:
 ```powershell
 python -m scripts.check_production_settings
 python -m scripts.verify_production https://REAL_DOMAIN --competition-id PUBLISHED_OPEN_ID
+python -m scripts.verify_production https://artflowfest.com --seo-audit --competition-id PUBLISHED_ID --report dist/seo-production-report.json --markdown-report dist/seo-production-report.md
 ```
 
 Первый скрипт читает только настройки окружения и не подключается к БД. Второй
 предназначен для уже опубликованного HTTPS deployment, выполняет только безопасные
+
 same-origin `GET` и никогда не открывает внешние ссылки.
+
+SEO mode also checks the redirect/domain matrix, sitemap pages, snippets,
+soft 404, internal graph, favicon, and bot parity. Fixture tests never use
+production network; the command itself requires an explicit HTTPS deployment.
 
 ## GitHub Actions
 

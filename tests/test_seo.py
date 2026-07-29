@@ -929,3 +929,17 @@ def test_missing_real_competition_facts_are_not_rendered(monkeypatch):
         "Стоимость уточняется",
     ):
         assert fallback not in body
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/competitions/not-an-id", "/competitions/0", "/competitions/-1"],
+)
+def test_malformed_competition_ids_return_noindex_404(path):
+    status, _, body = html_response(
+        main.create_app(production_settings()),
+        path,
+    )
+    assert status == 404
+    assert meta_content(body, name="robots") == "noindex, nofollow"
+    assert canonical_url(body) is None

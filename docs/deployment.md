@@ -100,7 +100,12 @@ python -m scripts.create_release_archive
 
 ```powershell
 python -m scripts.verify_production https://REAL_DOMAIN --competition-id PUBLISHED_OPEN_ID
+python -m scripts.verify_production https://artflowfest.com --seo-audit --competition-id PUBLISHED_ID --report dist/seo-production-report.json --markdown-report dist/seo-production-report.md
 ```
+
+Status interpretation, domain policy, webmaster panels, and lifecycle are
+centralized in docs/seo-production-runbook.md. The per-deploy sequence is in
+docs/post-deploy-checklist.md.
 
 Скрипт не отправляет заявки и не делает запросы к внешним URL. Он проверяет HTTPS,
 health, отключённые docs, CSP/HSTS и остальные headers, неизвестный Host, 404,
@@ -121,15 +126,9 @@ WebP — короткий cache и не должен повторно gzip-сж�
 что Railway proxy не применил двойное сжатие. Полный локальный baseline и budgets
 описаны в `docs/performance-budget.md`.
 
-Дополнительно для SEO вручную проверьте исходный HTML `/`, `/competitions`, `/faq`
-и опубликованного конкурса: canonical должен начинаться с
-`https://artflowfest.com`, а `og:url` должен ему точно соответствовать. Затем:
-
-1. Добавьте `https://artflowfest.com` в Google Search Console.
-2. Добавьте тот же сайт в Яндекс Вебмастер.
-3. Отправьте в обе панели `https://artflowfest.com/sitemap.xml`.
-4. Проверьте опубликованный конкурс валидатором schema.org или Rich Results Test;
-   наличие `Event` зависит от реально заполненных названия, описания, даты и места.
+Run the automated SEO mode first. Search Console, Yandex Webmaster, snippet
+review, and lifecycle procedures are maintained only in
+docs/seo-production-runbook.md.
 
 Страницы ошибок, ответы `503`, healthcheck и production docs не должны попадать в
 индекс. Старый Railway hostname может обслуживать технические запросы, но не должен
@@ -155,6 +154,8 @@ WebP — короткий cache и не должен повторно gzip-сж�
 12. Подтверждено согласие на публикацию фотографий несовершеннолетних.
 13. Владельцы разрешили публикацию всех показанных контактов.
 14. Проверено резервное копирование общей PostgreSQL и процедура восстановления.
+15. SEO mode completed without FAIL; owner reviewed WARNING and NOT CHECKED.
+16. docs/post-deploy-checklist.md completed.
 
 Этот checklist не выполняет SQL, не подключается к Railway и не запускает deploy
 автоматически.

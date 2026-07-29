@@ -135,7 +135,12 @@ python -m pip_audit -r requirements.lock
 ```powershell
 python -m scripts.check_production_settings
 python -m scripts.verify_production https://REAL_DOMAIN --competition-id PUBLISHED_OPEN_ID
+python -m scripts.verify_production https://artflowfest.com --seo-audit --competition-id PUBLISHED_ID --report dist/seo-production-report.json --markdown-report dist/seo-production-report.md
 ```
+
+SEO mode performs a bounded read-only production audit and writes
+machine-readable and operational reports. The complete procedure is in
+docs/seo-production-runbook.md.
 
 CI на `push` и `pull_request` отдельно запускает unit/security, Gitleaks по
 Git-истории, PostgreSQL integration и browser E2E. Workflow не выполняет deploy и не
@@ -232,10 +237,9 @@ Header, footer и главная связывают каталог, `/about`, `/
 python -m pytest -q tests/test_seo.py
 ```
 
-После deployment владелец добавляет `https://artflowfest.com` в Google Search
-Console и Яндекс Вебмастер, подтверждает права и отправляет в обе панели
-`https://artflowfest.com/sitemap.xml`. Это ручные операции: приложение не содержит
-аналитику, счётчики или токены поисковых систем.
+Google Search Console and Yandex Webmaster operations, the first-eight-weeks
+schedule, snippet review, and competition lifecycle are centralized in
+docs/seo-production-runbook.md.
 
 ## Доступ к данным
 
@@ -279,6 +283,8 @@ ArtFlowWeb формирует ссылку, а ArtFlowBot обрабатывае
 - [Аудит производительности](docs/performance.md)
 - [Performance budget и измеренный baseline](docs/performance-budget.md)
 - [Карта SEO-контента и внутренних ссылок](docs/seo-content-map.md)
+- [Production SEO runbook](docs/seo-production-runbook.md)
+- [Post-deploy checklist](docs/post-deploy-checklist.md)
 
 ## Безопасность
 

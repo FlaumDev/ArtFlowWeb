@@ -556,3 +556,46 @@ def test_all_blank_target_links_are_isolated():
         source = path.read_text(encoding="utf-8")
         for tag in re.findall(r"<a\b[^>]*target=\"_blank\"[^>]*>", source, re.DOTALL):
             assert re.search(r'rel="[^"]*\bnoopener\b[^"]*\bnoreferrer\b[^"]*"', tag), f"Unsafe link in {path}"
+
+
+def test_detail_help_fragment_requires_organizer_section(monkeypatch):
+    async def competition(
+        _competition_id,
+        app_settings=None,
+        database_pool=None,
+        cache=None,
+    ):
+        return sample_competition()
+
+    async def no_related(*args, **kwargs):
+        return []
+
+    site_content = get_site_content()
+    site_content["contacts"]["organizers"] = []
+    site_content["contacts"]["email"] = "help@example.test"
+    site_content["has_contacts"] = True
+    monkeypatch.setattr(
+        competition_routes,
+        "get_competition_by_id",
+        competition,
+    )
+    monkeypatch.setattr(
+        competition_routes,
+        "get_related_competitions",
+        no_related,
+    )
+    monkeypatch.setattr(
+        competition_routes,
+        "get_site_content",
+        lambda: site_content,
+    )
+
+    response = asyncio.run(
+        competition_routes.competition_detail(
+            request_for("/competitions/7"),
+            "7",
+        )
+    )
+    body = response.body.decode()
+    assert 'href="#event-help"' not in body
+    assert 'id="event-help"' not in body

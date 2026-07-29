@@ -136,12 +136,6 @@ resources блокируются; `--allow-third-party` включается т�
 передаёт отчёт внешним сервисам. Если Chromium отсутствует, он завершается с
 командой установки браузера.
 
-После deployment владелец вручную:
-
-1. Проверяет mobile и desktop URL в PageSpeed Insights без утверждения результата
-   до фактического прогона.
-2. Добавляет `https://artflowfest.com` в Google Search Console и Яндекс Вебмастер.
-3. Подтверждает владение выбранным способом, не сохраняя verification secrets в Git.
-4. Отправляет `https://artflowfest.com/sitemap.xml` в обе панели.
-5. Следит за индексацией, диагностикой и полевыми Core Web Vitals; у нового сайта
-   полевые данные могут появиться не сразу.
+After deployment, the owner runs PageSpeed Insights on mobile and desktop
+without claiming a score before measurement. Webmaster-panel operations are
+centralized in docs/seo-production-runbook.md.

@@ -89,14 +89,23 @@ async def competitions(request: Request) -> HTMLResponse:
 @router.get("/competitions/{competition_id}", response_class=HTMLResponse)
 async def competition_detail(
     request: Request,
-    competition_id: int,
+    competition_id: str,
 ) -> HTMLResponse:
+    competition_id = str(competition_id)
+    if (
+        not competition_id.isascii()
+        or not competition_id.isdigit()
+        or len(competition_id) > 18
+        or int(competition_id) < 1
+    ):
+        raise HTTPException(status_code=404, detail="Competition not found")
+    competition_id_value = int(competition_id)
     active_settings = request_settings(request)
     database_pool = request_database_pool(request)
     caches = request_caches(request)
     try:
         competition = await get_competition_by_id(
-            competition_id,
+            competition_id_value,
             app_settings=active_settings,
             database_pool=database_pool,
             cache=caches.competition_details,
@@ -127,7 +136,7 @@ async def competition_detail(
     source = source if isinstance(source, dict) else {}
     try:
         related_competitions = await get_related_competitions(
-            competition_id,
+            competition_id_value,
             source.get("city"),
             app_settings=active_settings,
             database_pool=database_pool,

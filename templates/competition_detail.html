@@ -68,7 +68,7 @@
                     {% elif not competition.registration_is_open %}
                         <a class="button button-quiet" href="{{ url_for('competitions') }}">Посмотреть другие конкурсы</a>
                     {% endif %}
-                    {% if site_content.has_contacts %}<a class="text-arrow" href="#event-help">Задать вопрос организаторам <span aria-hidden="true">↓</span></a>{% endif %}
+                    {% if site_content.contacts.organizers %}<a class="text-arrow" href="#event-help">Задать вопрос организаторам <span aria-hidden="true">↓</span></a>{% endif %}
                 </div>
                 {% if competition.registration_is_open and not competition.telegram_url %}
                     <p class="inline-notice">Переход к заявке временно недоступен. Попробуйте немного позже.</p>
