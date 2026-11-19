@@ -1,12 +1,13 @@
 import asyncio
 from dataclasses import replace
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from fastapi import Request
 
 from app import database, main
 from app.cache import ApplicationCaches
+from app.clock import current_date
 from app.config import Settings, settings
 from app.repositories import competitions as competitions_repository
 from app.routers import competitions as competition_routes
@@ -198,7 +199,10 @@ def test_route_uses_custom_production_settings_for_urls(monkeypatch):
     ):
         received.append(app_settings)
         return competitions_service._serialize_competition(
-            competition_row(id=competition_id),
+            competition_row(
+                id=competition_id,
+                application_deadline=current_date(app_settings) + timedelta(days=1),
+            ),
             app_settings,
         )
 
